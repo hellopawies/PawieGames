@@ -1492,11 +1492,10 @@ document.getElementById("admin-signout-btn").addEventListener("click", onLogout)
 
 // ─── Buy ──────────────────────────────────────────────────
 function buyIndustry(i) {
-  const maxAffordable = getMaxBuy(i);
-  const qty = buyQty === 'max' ? maxAffordable : Math.min(+buyQty, maxAffordable);
+  const qty = buyQty === 'max' ? getMaxBuy(i) : +buyQty;
   if (qty <= 0) return;
   const cost = getCostN(i, qty);
-  if (state.money < cost) return; // safety guard
+  if (state.money < cost) return;
   state.money   -= cost;
   state.owned[i] += qty;
   render();
@@ -1561,9 +1560,9 @@ function render() {
     const income        = getIncome(i);
     const canAfford     = state.money >= cost1;
     const maxAffordable = getMaxBuy(i);
-    const resolvedQty   = buyQty === 'max' ? maxAffordable : Math.min(+buyQty, maxAffordable);
+    const resolvedQty   = buyQty === 'max' ? maxAffordable : +buyQty;
     const buyCost       = resolvedQty > 0 ? getCostN(i, resolvedQty) : cost1;
-    const btnDisabled   = resolvedQty === 0;
+    const btnDisabled   = resolvedQty === 0 || state.money < buyCost;
 
     card.querySelector("[data-income]").textContent =
       state.owned[i] > 0
