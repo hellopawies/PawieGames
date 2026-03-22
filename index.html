@@ -619,7 +619,7 @@
     </div>
   </div>
   <div id="header">
-    <h1>Idle <span>Industry</span><button class="version-tag" onclick="openChangelog()">v0.3</button></h1>
+    <h1>Idle <span>Industry</span><button class="version-tag" onclick="openChangelog()">v0.3.0</button></h1>
     <div id="stats">
       <div id="money-display">$0.00</div>
       <div id="income-display">$0.00 / sec</div>
@@ -648,7 +648,7 @@
 <div id="admin-screen">
   <div id="admin-header">
     <div class="admin-brand">
-      Idle Industry <span class="badge">Admin</span><button class="version-tag" onclick="openChangelog()" style="margin-left:10px;">v0.3</button>
+      Idle Industry <span class="badge">Admin</span><button class="version-tag" onclick="openChangelog()" style="margin-left:10px;">v0.3.0</button>
     </div>
     <div id="admin-user-area">
       <span id="admin-username-display"></span>
@@ -2188,9 +2188,8 @@ function selectEmoji(emoji) {
 // ════════════════════════════════════════════════════════════
 const CHANGELOG = [
   {
-    version: "v0.3",
+    version: "v0.3.0",
     date: "2026-03-23",
-    time: "14:00 SGT",
     changes: [
       "Added animated business-theme background across all screens",
       "Added live server stats on login page (SGT server time, active accounts, cost multiplier, idle cap)",
@@ -2199,9 +2198,8 @@ const CHANGELOG = [
     ],
   },
   {
-    version: "v0.2",
+    version: "v0.2.0",
     date: "2026-03-22",
-    time: "20:00 SGT",
     changes: [
       "Added player rank system: Intern → Associate → Manager → Director → VP → CEO",
       "Each rank provides an income multiplier bonus and extra offline earning hours",
@@ -2209,9 +2207,8 @@ const CHANGELOG = [
     ],
   },
   {
-    version: "v0.1",
+    version: "v0.1.0",
     date: "2026-03-21",
-    time: "18:00 SGT",
     changes: [
       "Initial launch — build industries and earn money passively",
       "Cloud save syncs your progress automatically every 5 ticks",
@@ -2227,7 +2224,7 @@ function openChangelog() {
     <div class="cl-entry">
       <div class="cl-header">
         <span class="cl-ver-tag">${entry.version}</span>
-        <span class="cl-date">${entry.date} · ${entry.time}</span>
+        <span class="cl-date">${entry.date}</span>
       </div>
       <ul class="cl-items">
         ${entry.changes.map(c => `<li>${escHtml(c)}</li>`).join("")}
