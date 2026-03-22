@@ -682,7 +682,7 @@
 <!-- ── Auth screen ── -->
 <div id="auth-screen">
   <div id="auth-card">
-    <div class="logo">Idle <span>Industry</span></div>
+    <div class="logo">Idle <span>Industry</span><button class="version-tag" onclick="openChangelog()" style="vertical-align:middle;margin-left:6px;">v0.7.0</button></div>
     <div class="tagline">Build your empire. No email required.</div>
     <div id="auth-title">Sign in</div>
     <div class="field">
@@ -730,7 +730,7 @@
     </div>
   </div>
   <div id="header">
-    <h1>Idle <span>Industry</span><button class="version-tag" onclick="openChangelog()">v0.6.0</button></h1>
+    <h1>Idle <span>Industry</span><button class="version-tag" onclick="openChangelog()">v0.7.0</button></h1>
     <div id="stats">
       <div id="money-display">$0.00</div>
       <div id="income-display">$0.00 / sec</div>
@@ -766,7 +766,7 @@
 <div id="admin-screen">
   <div id="admin-header">
     <div class="admin-brand">
-      Idle Industry <span class="badge">Admin</span><button class="version-tag" onclick="openChangelog()" style="margin-left:10px;">v0.6.0</button>
+      Idle Industry <span class="badge">Admin</span><button class="version-tag" onclick="openChangelog()" style="margin-left:10px;">v0.7.0</button>
     </div>
     <div id="admin-user-area">
       <span id="admin-username-display"></span>
@@ -935,7 +935,12 @@ const DEFAULT_INDUSTRIES = [
   { id: 7,  name: "Megacorp",          emoji: "🌐", baseCost: 100_000_000,     baseIncome: 43_000      },
   { id: 8,  name: "AI Conglomerate",   emoji: "🤖", baseCost: 1_000_000_000,   baseIncome: 240_000     },
   { id: 9,  name: "Dyson Sphere",      emoji: "☀️", baseCost: 10_000_000_000,  baseIncome: 1_300_000   },
-  { id: 10, name: "Galactic Empire",   emoji: "🌌", baseCost: 100_000_000_000, baseIncome: 7_000_000   },
+  { id: 10, name: "Galactic Empire",   emoji: "🌌", baseCost: 100_000_000_000,       baseIncome: 7_000_000       },
+  { id: 11, name: "Quantum Nexus",     emoji: "🔮", baseCost: 1_000_000_000_000,     baseIncome: 40_000_000      },
+  { id: 12, name: "Neural Galaxy",     emoji: "🧠", baseCost: 10_000_000_000_000,    baseIncome: 220_000_000     },
+  { id: 13, name: "Dark Matter Engine",emoji: "⚫", baseCost: 100_000_000_000_000,   baseIncome: 1_200_000_000   },
+  { id: 14, name: "Time Forge",        emoji: "⏳", baseCost: 1_000_000_000_000_000, baseIncome: 6_500_000_000   },
+  { id: 15, name: "Entropy Vault",     emoji: "🌀", baseCost: 10_000_000_000_000_000,baseIncome: 36_000_000_000  },
 ];
 const DEFAULT_COST_SCALE    = 1.15;
 const DEFAULT_MAX_OFFLINE_H = 2;
@@ -1487,10 +1492,11 @@ document.getElementById("admin-signout-btn").addEventListener("click", onLogout)
 
 // ─── Buy ──────────────────────────────────────────────────
 function buyIndustry(i) {
-  const qty  = buyQty === 'max' ? getMaxBuy(i) : +buyQty;
+  const maxAffordable = getMaxBuy(i);
+  const qty = buyQty === 'max' ? maxAffordable : Math.min(+buyQty, maxAffordable);
   if (qty <= 0) return;
   const cost = getCostN(i, qty);
-  if (state.money < cost) return;
+  if (state.money < cost) return; // safety guard
   state.money   -= cost;
   state.owned[i] += qty;
   render();
@@ -1554,9 +1560,10 @@ function render() {
     const cost1         = getCost(i);
     const income        = getIncome(i);
     const canAfford     = state.money >= cost1;
-    const resolvedQty   = buyQty === 'max' ? getMaxBuy(i) : +buyQty;
+    const maxAffordable = getMaxBuy(i);
+    const resolvedQty   = buyQty === 'max' ? maxAffordable : Math.min(+buyQty, maxAffordable);
     const buyCost       = resolvedQty > 0 ? getCostN(i, resolvedQty) : cost1;
-    const btnDisabled   = resolvedQty === 0 || state.money < buyCost;
+    const btnDisabled   = resolvedQty === 0;
 
     card.querySelector("[data-income]").textContent =
       state.owned[i] > 0
@@ -2351,6 +2358,16 @@ function selectEmoji(emoji) {
 // CHANGELOG
 // ════════════════════════════════════════════════════════════
 const CHANGELOG = [
+  {
+    version: "v0.7.0",
+    date: "2026-03-23",
+    changes: [
+      "Version number now shown on the login screen next to the game title",
+      "Buy ×10/×100 now uses 'buy up to N' — buys however many you can afford, up to the selected amount",
+      "5 new late-game buildings: Quantum Nexus, Neural Galaxy, Dark Matter Engine, Time Forge, Entropy Vault",
+      "New buildings have very tough balance — payback times range from ~7 hours to ~77 hours per unit",
+    ],
+  },
   {
     version: "v0.6.0",
     date: "2026-03-23",
