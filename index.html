@@ -913,12 +913,13 @@ function applyGameConfig(cfg) {
 
 // ─── Active events & MOTD dismiss ─────────────────────────
 function getActiveEvents() {
-  const n = Date.now(); // use browser clock directly — event times are local-time strings
+  const sgt = new Date(Date.now() + 8 * 3600000); // SGT = UTC+8
+  const today = `${sgt.getUTCFullYear()}-${String(sgt.getUTCMonth()+1).padStart(2,"0")}-${String(sgt.getUTCDate()).padStart(2,"0")}`;
   const active = GAME_EVENTS.filter(ev => {
     if (!ev.startTime || !ev.endTime) return false;
-    return n >= new Date(ev.startTime).getTime() && n <= new Date(ev.endTime).getTime();
+    return today >= ev.startTime && today <= ev.endTime;
   });
-  console.log(`[Events] ${GAME_EVENTS.length} loaded, ${active.length} active. Now=${new Date(n).toISOString()}`,
+  console.log(`[Events] ${GAME_EVENTS.length} loaded, ${active.length} active. Today(SGT)=${today}`,
     GAME_EVENTS.map(ev => ({ name: ev.name, start: ev.startTime, end: ev.endTime, active: active.includes(ev) })));
   return active;
 }
@@ -1732,12 +1733,11 @@ function getEditorEventValues() {
 
 function getEventEditorStatus(ev) {
   if (!ev.startTime || !ev.endTime) return null;
-  const n = Date.now(); // use browser clock directly
-  const s = new Date(ev.startTime).getTime();
-  const e = new Date(ev.endTime).getTime();
-  if (n >= s && n <= e) return { label: "🟢 Active",    cls: "active"    };
-  if (n < s)            return { label: "⏳ Scheduled", cls: "scheduled" };
-  return                       { label: "Expired",      cls: "expired"   };
+  const sgt = new Date(Date.now() + 8 * 3600000); // SGT = UTC+8
+  const today = `${sgt.getUTCFullYear()}-${String(sgt.getUTCMonth()+1).padStart(2,"0")}-${String(sgt.getUTCDate()).padStart(2,"0")}`;
+  if (today >= ev.startTime && today <= ev.endTime) return { label: "🟢 Active",    cls: "active"    };
+  if (today < ev.startTime)                         return { label: "⏳ Scheduled", cls: "scheduled" };
+  return                                                   { label: "Expired",      cls: "expired"   };
 }
 
 function renderEventEditorRows() {
@@ -1760,12 +1760,12 @@ function renderEventEditorRows() {
           <input type="number" id="ev-bonus-${i}" value="${Math.round((ev.incomeBonus||0)*100)}" min="0" step="1" max="1000" placeholder="0">
         </div>
         <div class="ef">
-          <label>Start (SGT / local)</label>
-          <input type="datetime-local" id="ev-start-${i}" value="${ev.startTime||''}">
+          <label>Start Date (SGT)</label>
+          <input type="date" id="ev-start-${i}" value="${ev.startTime||''}">
         </div>
         <div class="ef">
-          <label>End (SGT / local)</label>
-          <input type="datetime-local" id="ev-end-${i}" value="${ev.endTime||''}">
+          <label>End Date (SGT)</label>
+          <input type="date" id="ev-end-${i}" value="${ev.endTime||''}">
         </div>
         <div style="display:flex;align-items:flex-end;">
           <button class="ie-del-btn" onclick="removeEventRow(${i})" title="Remove event">✕</button>
@@ -1807,8 +1807,8 @@ function renderEventLivePreview() {
   const el = document.getElementById("event-live-preview");
   if (!el) return;
 
-  const now8 = new Date(now() + 8 * 3600000); // SGT
-  const timeStr = now8.toUTCString().replace(" GMT", " SGT").replace(/^.*?, /, "");
+  const now8 = new Date(Date.now() + 8 * 3600000); // SGT
+  const timeStr = `${now8.getUTCFullYear()}-${String(now8.getUTCMonth()+1).padStart(2,"0")}-${String(now8.getUTCDate()).padStart(2,"0")} (SGT)`;
 
   if (GAME_EVENTS.length === 0) {
     el.innerHTML = `<div style="color:var(--muted);font-size:0.82rem;">No events configured. Add one below.</div>`;
