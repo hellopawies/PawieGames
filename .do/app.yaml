@@ -1,6 +1,0 @@
-name: idle-industry
-static_sites:
-- name: idle-industry
-  source_dir: /
-  index_document: index.html
-  catchall_document: index.html
