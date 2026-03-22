@@ -857,7 +857,9 @@ async function syncServerTime() {
   const { data } = await sb.rpc("get_server_time");
   if (data) {
     const rtt = Date.now() - before;
-    serverTimeOffset = data - (before + rtt / 2);
+    // If server returns seconds instead of ms (< year 2001 in ms = 1e12), convert
+    const serverMs = data < 1e12 ? data * 1000 : data;
+    serverTimeOffset = serverMs - (before + rtt / 2);
   }
 }
 
@@ -911,7 +913,7 @@ function applyGameConfig(cfg) {
 
 // ─── Active events & MOTD dismiss ─────────────────────────
 function getActiveEvents() {
-  const n = now();
+  const n = Date.now(); // use browser clock directly — event times are local-time strings
   const active = GAME_EVENTS.filter(ev => {
     if (!ev.startTime || !ev.endTime) return false;
     return n >= new Date(ev.startTime).getTime() && n <= new Date(ev.endTime).getTime();
@@ -1730,7 +1732,7 @@ function getEditorEventValues() {
 
 function getEventEditorStatus(ev) {
   if (!ev.startTime || !ev.endTime) return null;
-  const n = now();
+  const n = Date.now(); // use browser clock directly
   const s = new Date(ev.startTime).getTime();
   const e = new Date(ev.endTime).getTime();
   if (n >= s && n <= e) return { label: "🟢 Active",    cls: "active"    };
