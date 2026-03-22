@@ -561,6 +561,96 @@
     outline: none; transition: border-color 0.15s; max-width: 140px;
   }
   .rank-select:focus { border-color: var(--yellow); }
+
+  /* ════════════════════════════════════════════════════════════
+     RESPONSIVE — MOBILE (≤ 640px)
+  ════════════════════════════════════════════════════════════ */
+  @media (max-width: 640px) {
+
+    /* ── Game header: stats drop to full-width second row ── */
+    #header {
+      flex-wrap: wrap;
+      padding: 10px 14px 8px;
+      gap: 4px 10px;
+    }
+    #header h1   { font-size: 1rem; flex: 1 1 auto; }
+    #auth-area   { flex: 0 0 auto; }
+    #stats       { order: 3; flex: 0 0 100%; padding: 2px 0 0; }
+    #money-display  { font-size: 1.25rem; }
+    #income-display { font-size: 0.76rem; }
+    /* Hide username text — rank badge + buttons still visible */
+    #username-display { display: none; }
+    .hdr-btn { padding: 7px 11px; }
+
+    /* ── Main content ── */
+    #main { padding: 12px 10px 60px; }
+
+    /* ── Industry cards ── */
+    .card       { padding: 11px 12px; gap: 10px; }
+    .card-emoji { font-size: 1.65rem; width: 38px; }
+    .buy-btn    { padding: 8px 12px; font-size: 0.82rem; }
+
+    /* ── MOTD banner ── */
+    #motd-banner { flex-wrap: wrap; padding: 9px 14px; }
+
+    /* ── Offline toast ── */
+    #offline-toast { flex-wrap: wrap; gap: 8px; }
+
+    /* ── Login stats: 2×2 grid ── */
+    #login-stats   { grid-template-columns: repeat(2, 1fr); width: 100%; max-width: 420px; }
+    .ls-label      { font-size: 0.65rem; }
+
+    /* ── Modals: full viewport width ── */
+    #leaderboard-modal .modal-box { width: calc(100vw - 32px); }
+    #changelog-modal .modal-box   { width: calc(100vw - 32px); max-height: 85vh; }
+
+    /* ── Admin header + nav ── */
+    #admin-header { padding: 10px 14px; }
+    .admin-brand  { font-size: 0.95rem; }
+    #admin-nav    { overflow-x: auto; padding: 0 10px; -webkit-overflow-scrolling: touch; }
+    .tab-btn      { padding: 11px 12px; font-size: 0.82rem; }
+    #admin-body   { padding: 16px 12px 60px; }
+
+    /* ── Industry editor rows ──
+       Desktop: [#] [Name] [Emoji] [Cost] [Income] [Del]  (6 col grid)
+       Mobile:  Row1: [#(28px)] [Name(1fr)] [Emoji(56px)] [Del(28px)]
+                Row2: [Cost(28px+1fr)] [Income(56px+28px)]
+    ── */
+    .ind-editor-row { grid-template-columns: 28px 1fr 56px 28px; }
+    .ind-editor-row > :nth-child(1) { grid-row: 1; grid-column: 1; }
+    .ind-editor-row > :nth-child(2) { grid-row: 1; grid-column: 2; }
+    .ind-editor-row > :nth-child(3) { grid-row: 1; grid-column: 3; }
+    .ind-editor-row > :nth-child(4) { grid-row: 2; grid-column: 1 / 3; }
+    .ind-editor-row > :nth-child(5) { grid-row: 2; grid-column: 3 / 5; }
+    .ind-editor-row > :nth-child(6) { grid-row: 1; grid-column: 4; }
+
+    /* ── Rank editor rows: same reflow ── */
+    .rank-editor-row { grid-template-columns: 28px 1fr 56px 28px; }
+    .rank-editor-row > :nth-child(1) { grid-row: 1; grid-column: 1; }
+    .rank-editor-row > :nth-child(2) { grid-row: 1; grid-column: 2; }
+    .rank-editor-row > :nth-child(3) { grid-row: 1; grid-column: 3; }
+    .rank-editor-row > :nth-child(4) { grid-row: 2; grid-column: 1 / 3; }
+    .rank-editor-row > :nth-child(5) { grid-row: 2; grid-column: 3 / 5; }
+    .rank-editor-row > :nth-child(6) { grid-row: 1; grid-column: 4; }
+
+    /* ── Event editor top ──
+       Row1: [Name(col1)]            [Del(col2)]
+       Row2: [Bonus %(col1)]         [empty]
+       Row3: [Start Date(col1)]      [End Date(col2)]
+    ── */
+    .event-editor-top { grid-template-columns: 1fr 1fr; }
+    .event-editor-top > :nth-child(1) { grid-column: 1; grid-row: 1; }
+    .event-editor-top > :nth-child(2) { grid-column: 1; grid-row: 2; }
+    .event-editor-top > :nth-child(3) { grid-column: 1; grid-row: 3; }
+    .event-editor-top > :nth-child(4) { grid-column: 2; grid-row: 3; }
+    .event-editor-top > :nth-child(5) { grid-column: 2; grid-row: 1; align-self: end; }
+
+    /* ── Global config: single column ── */
+    .global-cfg { grid-template-columns: 1fr; }
+
+    /* ── Users table: ensure horizontal scroll ── */
+    .tbl-wrap { -webkit-overflow-scrolling: touch; }
+  }
 </style>
 </head>
 <body>
@@ -619,7 +709,7 @@
     </div>
   </div>
   <div id="header">
-    <h1>Idle <span>Industry</span><button class="version-tag" onclick="openChangelog()">v0.3.0</button></h1>
+    <h1>Idle <span>Industry</span><button class="version-tag" onclick="openChangelog()">v0.5.0</button></h1>
     <div id="stats">
       <div id="money-display">$0.00</div>
       <div id="income-display">$0.00 / sec</div>
@@ -648,7 +738,7 @@
 <div id="admin-screen">
   <div id="admin-header">
     <div class="admin-brand">
-      Idle Industry <span class="badge">Admin</span><button class="version-tag" onclick="openChangelog()" style="margin-left:10px;">v0.3.0</button>
+      Idle Industry <span class="badge">Admin</span><button class="version-tag" onclick="openChangelog()" style="margin-left:10px;">v0.5.0</button>
     </div>
     <div id="admin-user-area">
       <span id="admin-username-display"></span>
@@ -807,13 +897,17 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ─── Default industry data (fallback if DB config unavailable) ─
 const DEFAULT_INDUSTRIES = [
-  { id: 0, name: "Lemonade Stand", emoji: "🍋", baseCost: 10,         baseIncome: 0.10   },
-  { id: 1, name: "Bakery",         emoji: "🥐", baseCost: 100,        baseIncome: 0.80   },
-  { id: 2, name: "Factory",        emoji: "🏭", baseCost: 1_000,      baseIncome: 6.00   },
-  { id: 3, name: "Oil Rig",        emoji: "🛢️", baseCost: 10_000,     baseIncome: 47.00  },
-  { id: 4, name: "Tech Company",   emoji: "💻", baseCost: 100_000,    baseIncome: 260.00 },
-  { id: 5, name: "Bank",           emoji: "🏦", baseCost: 1_000_000,  baseIncome: 1_400  },
-  { id: 6, name: "Space Program",  emoji: "🚀", baseCost: 10_000_000, baseIncome: 7_800  },
+  { id: 0,  name: "Lemonade Stand",    emoji: "🍋", baseCost: 10,              baseIncome: 0.10        },
+  { id: 1,  name: "Bakery",            emoji: "🥐", baseCost: 100,             baseIncome: 0.80        },
+  { id: 2,  name: "Factory",           emoji: "🏭", baseCost: 1_000,           baseIncome: 6.00        },
+  { id: 3,  name: "Oil Rig",           emoji: "🛢️", baseCost: 10_000,          baseIncome: 47.00       },
+  { id: 4,  name: "Tech Company",      emoji: "💻", baseCost: 100_000,         baseIncome: 260.00      },
+  { id: 5,  name: "Bank",              emoji: "🏦", baseCost: 1_000_000,       baseIncome: 1_400       },
+  { id: 6,  name: "Space Program",     emoji: "🚀", baseCost: 10_000_000,      baseIncome: 7_800       },
+  { id: 7,  name: "Megacorp",          emoji: "🌐", baseCost: 100_000_000,     baseIncome: 43_000      },
+  { id: 8,  name: "AI Conglomerate",   emoji: "🤖", baseCost: 1_000_000_000,   baseIncome: 240_000     },
+  { id: 9,  name: "Dyson Sphere",      emoji: "☀️", baseCost: 10_000_000_000,  baseIncome: 1_300_000   },
+  { id: 10, name: "Galactic Empire",   emoji: "🌌", baseCost: 100_000_000_000, baseIncome: 7_000_000   },
 ];
 const DEFAULT_COST_SCALE    = 1.15;
 const DEFAULT_MAX_OFFLINE_H = 2;
@@ -2187,6 +2281,23 @@ function selectEmoji(emoji) {
 // CHANGELOG
 // ════════════════════════════════════════════════════════════
 const CHANGELOG = [
+  {
+    version: "v0.5.0",
+    date: "2026-03-23",
+    changes: [
+      "Full mobile layout: header stacks stats below title, industry cards and buttons are touch-friendly",
+      "Admin editor rows reflow to multi-line on narrow screens",
+      "Login stats bar switches to 2×2 grid on mobile",
+    ],
+  },
+  {
+    version: "v0.4.0",
+    date: "2026-03-23",
+    changes: [
+      "Added 4 new late-game buildings: Megacorp, AI Conglomerate, Dyson Sphere, and Galactic Empire",
+      "Payback times scale ~1.8× per tier at the high end — Galactic Empire takes ~4 hours per unit to break even",
+    ],
+  },
   {
     version: "v0.3.0",
     date: "2026-03-23",
