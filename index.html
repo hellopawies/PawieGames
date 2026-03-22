@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Idle Industry</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f0f13'/%3E%3Ctext x='32' y='44' font-family='system-ui' font-size='38' font-weight='900' fill='%236c63ff' text-anchor='middle'%3EII%3C/text%3E%3C%2Fsvg%3E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Idle Industry">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   :root {
@@ -651,6 +655,23 @@
     /* ── Users table: ensure horizontal scroll ── */
     .tbl-wrap { -webkit-overflow-scrolling: touch; }
   }
+
+  /* ── Buy quantity selector ── */
+  #buy-mode-bar {
+    display: flex; align-items: center; gap: 4px; margin-bottom: 10px;
+  }
+  #buy-mode-bar .bm-label {
+    font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 0.08em; margin-right: 4px; white-space: nowrap; flex-shrink: 0;
+  }
+  .bm-btn {
+    background: var(--surface); border: 1px solid #2a2a3e;
+    color: var(--muted); border-radius: 6px; padding: 5px 10px;
+    font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, color 0.12s; white-space: nowrap;
+  }
+  .bm-btn:hover  { border-color: var(--accent); color: var(--text); }
+  .bm-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 </style>
 </head>
 <body>
@@ -709,7 +730,7 @@
     </div>
   </div>
   <div id="header">
-    <h1>Idle <span>Industry</span><button class="version-tag" onclick="openChangelog()">v0.5.0</button></h1>
+    <h1>Idle <span>Industry</span><button class="version-tag" onclick="openChangelog()">v0.6.0</button></h1>
     <div id="stats">
       <div id="money-display">$0.00</div>
       <div id="income-display">$0.00 / sec</div>
@@ -726,6 +747,13 @@
   <div id="main">
     <div id="offline-toast" style="display:none"></div>
     <div class="section-label">Industries</div>
+    <div id="buy-mode-bar">
+      <span class="bm-label">Buy</span>
+      <button class="bm-btn active" data-qty="1">×1</button>
+      <button class="bm-btn" data-qty="10">×10</button>
+      <button class="bm-btn" data-qty="100">×100</button>
+      <button class="bm-btn" data-qty="max">Max</button>
+    </div>
     <div id="industry-list"></div>
   </div>
 
@@ -738,7 +766,7 @@
 <div id="admin-screen">
   <div id="admin-header">
     <div class="admin-brand">
-      Idle Industry <span class="badge">Admin</span><button class="version-tag" onclick="openChangelog()" style="margin-left:10px;">v0.5.0</button>
+      Idle Industry <span class="badge">Admin</span><button class="version-tag" onclick="openChangelog()" style="margin-left:10px;">v0.6.0</button>
     </div>
     <div id="admin-user-area">
       <span id="admin-username-display"></span>
@@ -942,6 +970,7 @@ let currentUsername = null;
 let currentIsAdmin  = false;
 let currentRankId   = 0;
 let tickInterval    = null;
+let buyQty          = 1; // 1, 10, 100, or 'max'
 
 // ─── Server time sync ─────────────────────────────────────
 let serverTimeOffset = 0;
@@ -1062,6 +1091,28 @@ function fmtTime(secs) {
 function getCost(i)    { return Math.ceil(INDUSTRIES[i].baseCost * Math.pow(COST_SCALE, state.owned[i])); }
 function getIncome(i)  { return INDUSTRIES[i].baseIncome * state.owned[i]; }
 function totalIncome() { return INDUSTRIES.reduce((s, _, i) => s + getIncome(i), 0) * getRankMultiplier() * (1 + getEventBonus()); }
+
+// Cost to buy n units of building i starting from current owned count
+function getCostN(i, n) {
+  if (n <= 0) return 0;
+  const base = INDUSTRIES[i].baseCost;
+  const s    = state.owned[i];
+  if (n === 1) return Math.ceil(base * Math.pow(COST_SCALE, s));
+  return Math.ceil(base * Math.pow(COST_SCALE, s) * (Math.pow(COST_SCALE, n) - 1) / (COST_SCALE - 1));
+}
+
+// Max units of building i affordable with current money
+function getMaxBuy(i) {
+  if (state.money < getCostN(i, 1)) return 0;
+  let n = 1;
+  while (getCostN(i, n * 2) <= state.money && n < 1e6) n *= 2;
+  let lo = n, hi = n * 2;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi + 1) / 2);
+    if (getCostN(i, mid) <= state.money) lo = mid; else hi = mid - 1;
+  }
+  return lo;
+}
 
 function getRankMultiplier() {
   const r = RANKS[currentRankId] || RANKS[0];
@@ -1436,13 +1487,23 @@ document.getElementById("admin-signout-btn").addEventListener("click", onLogout)
 
 // ─── Buy ──────────────────────────────────────────────────
 function buyIndustry(i) {
-  const cost = getCost(i);
+  const qty  = buyQty === 'max' ? getMaxBuy(i) : +buyQty;
+  if (qty <= 0) return;
+  const cost = getCostN(i, qty);
   if (state.money < cost) return;
-  state.money -= cost;
-  state.owned[i]++;
+  state.money   -= cost;
+  state.owned[i] += qty;
   render();
   saveGame();
 }
+
+document.getElementById("buy-mode-bar").addEventListener("click", e => {
+  const btn = e.target.closest(".bm-btn");
+  if (!btn) return;
+  buyQty = btn.dataset.qty === 'max' ? 'max' : +btn.dataset.qty;
+  document.querySelectorAll(".bm-btn").forEach(b => b.classList.toggle("active", b === btn));
+  render();
+});
 
 // ─── Render (game) ────────────────────────────────────────
 let firstRender = true;
@@ -1485,19 +1546,28 @@ function render() {
   }
 
   INDUSTRIES.forEach((ind, i) => {
-    const cost      = getCost(i);
-    const income    = getIncome(i);
-    const canAfford = state.money >= cost;
-    const card      = list.querySelector(`[data-id="${i}"]`);
+    const card       = list.querySelector(`[data-id="${i}"]`);
+    const isUnlocked = i === 0 || state.owned[i - 1] > 0;
+    card.style.display = isUnlocked ? "" : "none";
+    if (!isUnlocked) return;
+
+    const cost1         = getCost(i);
+    const income        = getIncome(i);
+    const canAfford     = state.money >= cost1;
+    const resolvedQty   = buyQty === 'max' ? getMaxBuy(i) : +buyQty;
+    const buyCost       = resolvedQty > 0 ? getCostN(i, resolvedQty) : cost1;
+    const btnDisabled   = resolvedQty === 0 || state.money < buyCost;
 
     card.querySelector("[data-income]").textContent =
       state.owned[i] > 0
         ? `${fmt(income)} / sec  (${fmt(ind.baseIncome)} each)`
         : `${fmt(ind.baseIncome)} / sec each`;
 
-    card.querySelector("[data-cost]").textContent  = `Cost: ${fmt(cost)}`;
+    card.querySelector("[data-cost]").textContent =
+      resolvedQty > 1 ? `Cost: ${fmt(buyCost)} ×${resolvedQty}` : `Cost: ${fmt(cost1)}`;
+
     card.querySelector("[data-owned]").textContent = state.owned[i];
-    card.querySelector("[data-buy]").disabled      = !canAfford;
+    card.querySelector("[data-buy]").disabled      = btnDisabled;
     card.classList.toggle("affordable", canAfford);
     card.classList.toggle("locked",     !canAfford);
   });
@@ -2282,6 +2352,15 @@ function selectEmoji(emoji) {
 // ════════════════════════════════════════════════════════════
 const CHANGELOG = [
   {
+    version: "v0.6.0",
+    date: "2026-03-23",
+    changes: [
+      "Buildings unlock progressively — buy at least one of each before the next is revealed",
+      "Buy quantity selector: ×1, ×10, ×100, and Max above the industry list",
+      "App favicon and Apple touch icon (add to home screen on iOS for the game icon)",
+    ],
+  },
+  {
     version: "v0.5.0",
     date: "2026-03-23",
     changes: [
@@ -2427,8 +2506,39 @@ function escHtml(str) {
 }
 
 // ─── Init ─────────────────────────────────────────────────
+// ─── App icon (Apple touch icon via canvas) ───────────────
+function initIcons() {
+  try {
+    const c = document.createElement("canvas");
+    c.width = c.height = 180;
+    const ctx = c.getContext("2d");
+    // Rounded rect background
+    ctx.fillStyle = "#0f0f13";
+    ctx.beginPath();
+    const r = 36;
+    ctx.moveTo(r, 0); ctx.arcTo(180, 0, 180, 180, r); ctx.arcTo(180, 180, 0, 180, r);
+    ctx.arcTo(0, 180, 0, 0, r); ctx.arcTo(0, 0, 180, 0, r); ctx.closePath();
+    ctx.fill();
+    // Glow
+    ctx.shadowColor = "#6c63ff";
+    ctx.shadowBlur  = 18;
+    // Text
+    ctx.fillStyle      = "#6c63ff";
+    ctx.font           = "bold 86px system-ui, -apple-system, sans-serif";
+    ctx.textAlign      = "center";
+    ctx.textBaseline   = "middle";
+    ctx.fillText("II", 90, 96);
+    const link = document.createElement("link");
+    link.rel   = "apple-touch-icon";
+    link.sizes = "180x180";
+    link.href  = c.toDataURL("image/png");
+    document.head.appendChild(link);
+  } catch (e) { /* canvas blocked, skip */ }
+}
+
 async function init() {
   initBgCanvas();
+  initIcons();
   await syncServerTime();
   await loadGameConfig();
   const session = loadSession();
