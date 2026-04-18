@@ -15,150 +15,36 @@
     --text: #e8e8f0;
     --muted: #888899;
     --green: #4caf8a;
+    --yellow: #f0c040;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  header {
-    padding: 3rem 2rem 1.5rem;
-    text-align: center;
-  }
-
-  header h1 {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-  }
-
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  header { padding: 3rem 2rem 1.5rem; text-align: center; }
+  header h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; }
   header h1 span { color: var(--accent); }
-
-  header p {
-    color: var(--muted);
-    margin-top: .5rem;
-    font-size: .95rem;
-  }
-
-  main {
-    flex: 1;
-    max-width: 900px;
-    width: 100%;
-    margin: 2rem auto;
-    padding: 0 1.5rem;
-  }
-
-  .section-label {
-    font-size: .75rem;
-    font-weight: 700;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 1rem;
-  }
-
-  .games-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1.25rem;
-  }
-
-  .game-card {
-    background: var(--surface);
-    border: 1px solid var(--surface2);
-    border-radius: 14px;
-    padding: 1.5rem;
-    text-decoration: none;
-    color: inherit;
-    display: flex;
-    flex-direction: column;
-    gap: .75rem;
-    transition: border-color .15s, transform .15s, box-shadow .15s;
-  }
-
-  .game-card:hover {
-    border-color: var(--accent);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(108,99,255,.15);
-  }
-
-  .game-card.disabled {
-    opacity: .5;
-    cursor: default;
-    pointer-events: none;
-  }
-
-  .card-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    background: var(--surface2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 900;
-    color: var(--accent);
-  }
-
-  .card-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-  }
-
-  .card-desc {
-    font-size: .875rem;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-
-  .card-tag {
-    display: inline-block;
-    font-size: .7rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    padding: .2rem .55rem;
-    border-radius: 99px;
-    background: rgba(108,99,255,.15);
-    color: var(--accent);
-    align-self: flex-start;
-  }
-
-  .card-tag.soon {
-    background: rgba(136,136,153,.1);
-    color: var(--muted);
-  }
-
-  footer {
-    text-align: center;
-    padding: 2rem;
-    font-size: .8rem;
-    color: var(--muted);
-  }
-
+  header p { color: var(--muted); margin-top: .5rem; font-size: .95rem; }
+  main { flex: 1; max-width: 900px; width: 100%; margin: 2rem auto; padding: 0 1.5rem; }
+  .section-label { font-size: .75rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+  .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
+  .game-card { background: var(--surface); border: 1px solid var(--surface2); border-radius: 14px; padding: 1.5rem; text-decoration: none; color: inherit; display: flex; flex-direction: column; gap: .75rem; transition: border-color .15s, transform .15s, box-shadow .15s; }
+  .game-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(108,99,255,.15); }
+  .card-icon { width: 48px; height: 48px; border-radius: 10px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; color: var(--accent); }
+  .card-title { font-size: 1.1rem; font-weight: 700; }
+  .card-desc { font-size: .875rem; color: var(--muted); line-height: 1.5; }
+  .card-tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .2rem .55rem; border-radius: 99px; background: rgba(108,99,255,.15); color: var(--accent); align-self: flex-start; }
+  footer { text-align: center; padding: 2rem; font-size: .8rem; color: var(--muted); }
   footer a { color: var(--accent); text-decoration: none; }
   footer a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
-
 <header>
   <h1>Pawie<span>Games</span></h1>
   <p>A small collection of browser games.</p>
 </header>
-
 <main>
   <div class="section-label">Games</div>
   <div class="games-grid">
-
     <a href="./idle-industry/" class="game-card">
       <div class="card-icon">II</div>
       <div>
@@ -170,22 +56,20 @@
         <span style="font-size:.75rem;color:var(--muted)">Launched Mar 22, 2026 &middot; Updated Mar 23, 2026</span>
       </div>
     </a>
-
-    <div class="game-card disabled">
-      <div class="card-icon" style="color:var(--muted)">?</div>
+    <a href="./drone/" class="game-card">
+      <div class="card-icon" style="font-size:1.2rem">⚡🌾</div>
       <div>
-        <div class="card-title">Coming Soon</div>
-        <div class="card-desc">The next game is in the works. Check back later.</div>
+        <div class="card-title">The Drone Was Deployed</div>
+        <div class="card-desc">Write JavaScript to automate your farm. Control a drone — harvest, plant, till, and scale up your operation.</div>
       </div>
-      <span class="card-tag soon">Coming soon</span>
-    </div>
-
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:auto">
+        <span class="card-tag" style="background:rgba(240,192,64,.15);color:var(--yellow)">In Development</span>
+      </div>
+    </a>
   </div>
 </main>
-
 <footer>
   Made by <a href="https://github.com/hellopawies" target="_blank" rel="noopener">PawieGames</a>
 </footer>
-
 </body>
 </html>
