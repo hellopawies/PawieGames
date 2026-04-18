@@ -667,16 +667,9 @@ table.users-tbl .time-cell  { color: var(--muted); font-size: 0.8rem; }
   top: 0; left: 0; right: 0;
   display: flex;
   align-items: center;
-  padding: 10px 20px;
+  padding: .6rem 1.25rem;
   background: var(--surface);
   border-bottom: 1px solid var(--surface2);
 }
-#back-banner a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  transition: color 0.15s;
-}
+#back-banner a { color: var(--muted); text-decoration: none; font-size: .8rem; font-weight: 600; transition: color 0.15s; }
 #back-banner a:hover { color: var(--text); }
