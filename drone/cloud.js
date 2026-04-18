@@ -9,17 +9,20 @@ try {
 } catch {}
 
 async function saveCloud() {
-  if (!currentUserId) return;
+  if (!currentUserId) { console.warn('[cloud] no userId, skipping save'); return; }
   const code = document.getElementById('code-editor')?.value ?? '';
-  await sb.rpc("save_drone", {
+  const { error } = await sb.rpc("save_drone", {
     p_user_id: currentUserId,
     p_data: { bought: [...G.bought], inv: { ...G.inv }, code },
   });
+  if (error) console.error('[cloud] save failed:', error);
+  else console.log('[cloud] saved ok');
 }
 
 async function loadCloud() {
-  if (!currentUserId) return null;
+  if (!currentUserId) { console.warn('[cloud] no userId, skipping load'); return null; }
   const { data, error } = await sb.rpc("load_drone", { p_user_id: currentUserId });
-  if (error || !data) return null;
+  if (error) { console.error('[cloud] load failed:', error); return null; }
+  console.log('[cloud] loaded:', data);
   return data;
 }
