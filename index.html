@@ -93,7 +93,26 @@
   .game-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(108,99,255,.15); }
   .card-icon { width: 48px; height: 48px; border-radius: 10px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; color: var(--accent); }
   .card-title { font-size: 1.1rem; font-weight: 700; }
-  .card-version { font-size: .65rem; font-weight: 700; color: var(--muted); border: 1px solid var(--surface2); border-radius: 5px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; letter-spacing: .04em; }
+  .card-version { font-size: .65rem; font-weight: 700; color: var(--muted); border: 1px solid var(--surface2); border-radius: 5px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; letter-spacing: .04em; cursor: pointer; background: none; font-family: inherit; transition: border-color .15s, color .15s; }
+  .card-version:hover { border-color: var(--accent); color: var(--accent-hover); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal-overlay.visible { display: flex; }
+  .modal-box { background: var(--surface); border: 1px solid var(--surface2); border-radius: 14px; padding: 24px; width: 440px; max-width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 12px 48px rgba(0,0,0,.6); }
+  .modal-title { font-size: 1rem; font-weight: 800; margin-bottom: 18px; letter-spacing: .02em; }
+  .modal-actions { margin-top: 18px; display: flex; justify-content: flex-end; }
+  .btn-primary { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+  .btn-primary:hover { background: var(--accent-hover); }
+
+  .cl-entry { margin-bottom: 20px; }
+  .cl-entry:last-child { margin-bottom: 4px; }
+  .cl-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .cl-ver-tag { font-size: .72rem; font-weight: 800; letter-spacing: .04em; color: var(--accent-hover); background: rgba(108,99,255,.15); border: 1px solid rgba(108,99,255,.3); border-radius: 5px; padding: 2px 7px; }
+  .cl-date { font-size: .72rem; color: var(--muted); }
+  .cl-items { list-style: none; padding: 0; margin: 0; }
+  .cl-items li { font-size: .82rem; color: var(--text); padding: 5px 0 5px 18px; border-bottom: 1px solid #1e1e2e; position: relative; line-height: 1.45; }
+  .cl-items li:last-child { border-bottom: none; }
+  .cl-items li::before { content: "▸"; position: absolute; left: 2px; color: var(--accent-hover); font-size: .7rem; top: 6px; }
   .card-desc { font-size: .875rem; color: var(--muted); line-height: 1.5; }
   .card-tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .2rem .55rem; border-radius: 99px; background: rgba(108,99,255,.15); color: var(--accent); align-self: flex-start; }
   #admin-section { margin-top: 2rem; }
@@ -144,7 +163,7 @@
       <a href="./idle-industry/" class="game-card">
         <div class="card-icon">II</div>
         <div>
-          <div class="card-title">Idle Industry <span class="card-version">v0.8.0</span></div>
+          <div class="card-title">Idle Industry <button class="card-version" onclick="event.preventDefault();event.stopPropagation();openChangelog('idle-industry');">v0.8.0</button></div>
           <div class="card-desc">Build your empire. Manage industries, climb the leaderboard, and earn while you're away.</div>
         </div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;margin-top:auto">
@@ -179,6 +198,16 @@
   <footer>Made by <a href="https://github.com/hellopawies" target="_blank" rel="noopener">PawieGames</a></footer>
 </div>
 
+<div class="modal-overlay" id="changelog-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="changelog-title">Idle Industry — Changelog</div>
+    <div id="changelog-content"></div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="changelog-close-btn">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL      = "https://fwawlsbjltgvcpyezciw.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_cWfZRmHb55YMA-wa7hb6rw_qP6dIuYi";
@@ -192,6 +221,85 @@ function loadSession() {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { return null; }
 }
 function clearSession() { localStorage.removeItem(SESSION_KEY); }
+
+function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+const CHANGELOGS = {
+  "idle-industry": {
+    title: "Idle Industry — Changelog",
+    entries: [
+      { version: "v0.8.0", date: "2026-03-23", changes: [
+        "Version tag on login screen is now a label (not a button)",
+        "Username placeholder changed from 'your_username' to 'Username'",
+        "Admin can now set a global Idle Income Multiplier — scales how much players earn while offline",
+        "Login stats now shows the Idle Bonus multiplier",
+        "New buildings from v0.7.0 now always appear even if the server config predates them",
+      ] },
+      { version: "v0.7.0", date: "2026-03-23", changes: [
+        "Version number now shown on the login screen next to the game title",
+        "Buy ×10/×100 now uses 'buy up to N' — buys however many you can afford, up to the selected amount",
+        "5 new late-game buildings: Quantum Nexus, Neural Galaxy, Dark Matter Engine, Time Forge, Entropy Vault",
+        "New buildings have very tough balance — payback times range from ~7 hours to ~77 hours per unit",
+      ] },
+      { version: "v0.6.0", date: "2026-03-23", changes: [
+        "Buildings unlock progressively — buy at least one of each before the next is revealed",
+        "Buy quantity selector: ×1, ×10, ×100, and Max above the industry list",
+        "App favicon and Apple touch icon (add to home screen on iOS for the game icon)",
+      ] },
+      { version: "v0.5.0", date: "2026-03-23", changes: [
+        "Full mobile layout: header stacks stats below title, industry cards and buttons are touch-friendly",
+        "Admin editor rows reflow to multi-line on narrow screens",
+        "Login stats bar switches to 2×2 grid on mobile",
+      ] },
+      { version: "v0.4.0", date: "2026-03-23", changes: [
+        "Added 4 new late-game buildings: Megacorp, AI Conglomerate, Dyson Sphere, and Galactic Empire",
+        "Payback times scale ~1.8× per tier at the high end — Galactic Empire takes ~4 hours per unit to break even",
+      ] },
+      { version: "v0.3.0", date: "2026-03-23", changes: [
+        "Added animated business-theme background across all screens",
+        "Added live server stats on login page (SGT server time, active accounts, cost multiplier, idle cap)",
+        "Added leaderboard — see the top 20 richest players on the server",
+        "Added version number and this changelog",
+      ] },
+      { version: "v0.2.0", date: "2026-03-22", changes: [
+        "Added player rank system: Intern → Associate → Manager → Director → VP → CEO",
+        "Each rank provides an income multiplier bonus and extra offline earning hours",
+        "Your current rank badge is now shown in the game header",
+      ] },
+      { version: "v0.1.0", date: "2026-03-21", changes: [
+        "Initial launch — build industries and earn money passively",
+        "Cloud save syncs your progress automatically every 5 ticks",
+        "Offline income accrues while you're away, up to the idle cap",
+        "Reset game option available at the bottom of the screen",
+      ] },
+    ],
+  },
+};
+
+function openChangelog(gameId) {
+  const cl = CHANGELOGS[gameId];
+  if (!cl) return;
+  document.getElementById("changelog-title").textContent = cl.title;
+  document.getElementById("changelog-content").innerHTML = cl.entries.map(entry => `
+    <div class="cl-entry">
+      <div class="cl-header">
+        <span class="cl-ver-tag">${entry.version}</span>
+        <span class="cl-date">${entry.date}</span>
+      </div>
+      <ul class="cl-items">
+        ${entry.changes.map(c => `<li>${escHtml(c)}</li>`).join("")}
+      </ul>
+    </div>
+  `).join("");
+  document.getElementById("changelog-modal").classList.add("visible");
+}
+
+document.getElementById("changelog-close-btn").addEventListener("click", () => {
+  document.getElementById("changelog-modal").classList.remove("visible");
+});
+document.getElementById("changelog-modal").addEventListener("click", e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.remove("visible");
+});
 
 function showScreen(id) {
   ["auth-screen", "hub-screen"].forEach(s =>
