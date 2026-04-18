@@ -71,9 +71,10 @@
   #hub-screen.visible { display: flex; }
   #hub-header {
     display: flex; justify-content: space-between; align-items: center;
-    padding: .75rem 2rem; background: var(--surface); border-bottom: 1px solid var(--surface2);
+    padding: 12px 20px; background: var(--surface); border-bottom: 1px solid #2a2a3e;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.4); position: sticky; top: 0; z-index: 100;
   }
-  .hub-brand h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -.5px; }
+  .hub-brand h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: .03em; }
   .hub-brand h1 span { color: var(--accent); }
   .hub-user { display: flex; align-items: center; gap: 12px; }
   #hub-username { font-size: .85rem; color: var(--accent-hover); font-weight: 600; }
