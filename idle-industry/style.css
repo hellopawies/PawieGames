@@ -1,4 +1,3 @@
-<style>
 :root {
   --bg: #0f0f13;
   --surface: #1a1a24;
@@ -661,4 +660,26 @@ table.users-tbl .time-cell  { color: var(--muted); font-size: 0.8rem; }
 }
 .bm-btn:hover  { border-color: var(--accent); color: var(--text); }
 .bm-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-</style>
+
+/* ── Back-to-hub banner (auth screen only) ── */
+#back-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--surface2);
+}
+#auth-screen.visible ~ * {}
+#back-banner.visible { display: flex; }
+#back-banner a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: color 0.15s;
+}
+#back-banner a:hover { color: var(--text); }
