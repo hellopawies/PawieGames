@@ -3,7 +3,6 @@ function showScreen(id) {
   ["auth-screen", "game-screen", "admin-screen"].forEach(s => {
     document.getElementById(s).classList.toggle("visible", s === id);
   });
-  document.getElementById("back-banner").classList.toggle("visible", id === "auth-screen");
 }
 function showGame(username) {
   stopLoginStats();

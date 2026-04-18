@@ -663,17 +663,14 @@ table.users-tbl .time-cell  { color: var(--muted); font-size: 0.8rem; }
 
 /* ── Back-to-hub banner (auth screen only) ── */
 #back-banner {
-  position: fixed;
+  position: absolute;
   top: 0; left: 0; right: 0;
-  z-index: 10;
-  display: none;
+  display: flex;
   align-items: center;
   padding: 10px 20px;
   background: var(--surface);
   border-bottom: 1px solid var(--surface2);
 }
-#auth-screen.visible ~ * {}
-#back-banner.visible { display: flex; }
 #back-banner a {
   color: var(--muted);
   text-decoration: none;
