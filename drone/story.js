@@ -122,6 +122,15 @@ function initStory() {
   document.getElementById('btn-story-mode').addEventListener('click', () => setMode('story'));
   document.getElementById('btn-free-mode').addEventListener('click',  () => setMode('free'));
 
+  document.getElementById('btn-restart-story').addEventListener('click', () => {
+    if (!confirm('Restart story from Chapter 1?')) return;
+    localStorage.removeItem('drone-story-done');
+    localStorage.setItem('drone-story-chapter', '0');
+    storyChapter = 0;
+    saveCloud();
+    setMode('story');
+  });
+
   document.getElementById('story-hint-btn').addEventListener('click', () => {
     const hint = document.getElementById('story-hint-text');
     const btn  = document.getElementById('story-hint-btn');
