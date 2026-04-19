@@ -32,27 +32,48 @@ async function init() {
     showIntro(username);
   } else {
     document.getElementById('intro-overlay').hidden = true;
-    startMission();
+    startMission(true);
   }
 }
 
 function applyPayload(saved) {
-  G.missionIdx   = saved.missionIdx   ?? 0;
-  G.missionsDone = saved.missionsDone ?? [];
-  G.tools        = saved.tools        ?? ['basic_cracker'];
-  G.crypto       = saved.crypto       ?? 0;
-  G.notoriety    = saved.notoriety    ?? 0;
-  G.freeMode     = saved.freeMode     ?? (G.missionIdx >= MISSIONS.length);
+  G.missionIdx      = saved.missionIdx   ?? 0;
+  G.missionsDone    = saved.missionsDone ?? [];
+  G.tools           = saved.tools        ?? ['basic_cracker'];
+  G.crypto          = saved.crypto       ?? 0;
+  G.notoriety       = saved.notoriety    ?? 0;
+  G.freeMode        = saved.freeMode     ?? (G.missionIdx >= MISSIONS.length);
+  G.downloadedFiles = saved.downloadedFiles ?? [];
+  if (saved.savedQuest) G.currentQuest = restoreQuest(saved.savedQuest);
+}
+
+function restoreQuest(data) {
+  const file = data._file;
+  return { ...data, check(G) { return G.downloadedFiles.includes(file); } };
 }
 
 function saveState() {
+  const savedQuest = G.currentQuest ? {
+    id:        G.currentQuest.id,
+    type:      G.currentQuest.type,
+    company:   G.currentQuest.company,
+    hostname:  G.currentQuest.hostname,
+    title:     G.currentQuest.title,
+    objective: G.currentQuest.objective,
+    _file:     G.currentQuest._file,
+    reward:    G.currentQuest.reward,
+    target:    G.currentQuest.target,
+    briefing:  G.currentQuest.briefing,
+  } : null;
   saveCloud({
-    missionIdx:   G.missionIdx,
-    missionsDone: G.missionsDone,
-    tools:        G.tools,
-    crypto:       G.crypto,
-    notoriety:    G.notoriety,
-    freeMode:     G.freeMode,
+    missionIdx:       G.missionIdx,
+    missionsDone:     G.missionsDone,
+    tools:            G.tools,
+    crypto:           G.crypto,
+    notoriety:        G.notoriety,
+    freeMode:         G.freeMode,
+    downloadedFiles:  G.downloadedFiles,
+    savedQuest,
   });
 }
 
@@ -86,16 +107,30 @@ function getCurrentMission() {
   return MISSIONS[G.missionIdx] ?? null;
 }
 
-async function startMission() {
-  G.connected = null; G.trace = 0; G.downloadedFiles = [];
+async function startMission(isResume = false) {
+  G.connected = null; G.trace = 0;
+  if (!isResume) G.downloadedFiles = [];
   updateHUD(); updateSidebar();
 
   if (G.freeMode || G.missionIdx >= MISSIONS.length) {
-    await enterFreeMode();
+    if (isResume && G.freeMode) {
+      await resumeFreeMode();
+    } else {
+      await enterFreeMode();
+    }
     return;
   }
 
-  await printLines(MISSIONS[G.missionIdx].briefing, 60);
+  if (isResume && G.downloadedFiles.length > 0) {
+    await printLines([
+      { type: 'sys',  text: '[ SESSION RESTORED ]' },
+      { type: 'info', text: `Mission:  ${MISSIONS[G.missionIdx].title}` },
+      { type: 'info', text: `Progress: ${G.downloadedFiles.length} file(s) downloaded` },
+      { type: 'dim',  text: 'Type "status" for mission details.' },
+    ], 40);
+  } else {
+    await printLines(MISSIONS[G.missionIdx].briefing, 60);
+  }
   printEmpty();
 }
 
@@ -116,11 +151,31 @@ async function enterFreeMode() {
   printEmpty();
 }
 
+async function resumeFreeMode() {
+  updateHUD(); updateSidebar();
+  if (G.currentQuest) {
+    await printLines([
+      { type: 'sys',  text: '[ SESSION RESTORED ]' },
+      { type: 'info', text: `Contract: ${G.currentQuest.title}` },
+      { type: 'info', text: `Target:   ${G.currentQuest.target.ip}` },
+      { type: 'info', text: `Objective: ${G.currentQuest.objective}` },
+      { type: 'dim',  text: 'Type "status" for details or "quest" to see contract.' },
+    ], 40);
+  } else {
+    await printLines([
+      { type: 'sys',  text: '[ SESSION RESTORED — FREE MODE ]' },
+      { type: 'dim',  text: 'Type "quest" to get a contract.' },
+    ], 40);
+  }
+  printEmpty();
+}
+
 async function generateNewQuest() {
   G.currentQuest    = generateQuest(G.tools);
   G.connected       = null;
   G.trace           = 0;
   G.downloadedFiles = [];
+  saveState();
   updateHUD(); updateSidebar();
   await printLines(G.currentQuest.briefing, 50);
   printEmpty();
@@ -400,6 +455,7 @@ async function cmdDownload(filename) {
   await printProgress('[*] Transfer', 800);
   if (!G.downloadedFiles.includes(filename)) G.downloadedFiles.push(filename);
   addTrace(5);
+  saveState();
   printLine(`[+] Downloaded: ${filename}`, 'out-ok');
 }
 
