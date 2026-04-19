@@ -1,8 +1,9 @@
 // ── Game state ───────────────────────────────────────────────
 let state = {
-  money:    10,
-  lastSave: Date.now(),
-  owned:    new Array(INDUSTRIES.length).fill(0),
+  money:         10,
+  lastSave:      Date.now(),
+  owned:         new Array(INDUSTRIES.length).fill(0),
+  prestigeCount: 0,
 };
 
 let currentUserId   = null;
@@ -136,8 +137,8 @@ function fmtTime(secs) {
 
 // ── Calculations ─────────────────────────────────────────────
 function getCost(i)    { return Math.ceil(INDUSTRIES[i].baseCost * Math.pow(COST_SCALE, state.owned[i])); }
-function getIncome(i)  { return INDUSTRIES[i].baseIncome * state.owned[i]; }
-function totalIncome() { return INDUSTRIES.reduce((s, _, i) => s + getIncome(i), 0) * getRankMultiplier() * (1 + getEventBonus()); }
+function getIncome(i)  { return INDUSTRIES[i].baseIncome * state.owned[i] * getMilestoneMultiplier(i); }
+function totalIncome() { return INDUSTRIES.reduce((s, _, i) => s + getIncome(i), 0) * getRankMultiplier() * (1 + getEventBonus()) * getPrestigeMultiplier(); }
 
 function getCostN(i, n) {
   if (n <= 0) return 0;
@@ -168,11 +169,84 @@ function getRankOfflineCap() {
   return MAX_OFFLINE + (r?.offlineBonus || 0) * 3600;
 }
 
+// ── Unlock thresholds ─────────────────────────────────────────
+function getUnlockThreshold(i) {
+  if (i <= 0)  return 0;
+  if (i <= 7)  return 10;
+  if (i <= 11) return 25;
+  return 50;
+}
+
+function isIndustryUnlocked(i) {
+  if (i === 0) return true;
+  return state.owned[i - 1] >= getUnlockThreshold(i);
+}
+
+// ── Milestones ────────────────────────────────────────────────
+const MILESTONE_STEPS = [
+  { at: 10,  mult: 1.5 },
+  { at: 25,  mult: 2.0 },
+  { at: 50,  mult: 3.0 },
+  { at: 100, mult: 5.0 },
+];
+
+function getMilestoneMultiplier(i) {
+  const n = state.owned[i];
+  let m = 1;
+  for (const step of MILESTONE_STEPS) if (n >= step.at) m = step.mult;
+  return m;
+}
+
+function getNextMilestone(i) {
+  const n = state.owned[i];
+  return MILESTONE_STEPS.find(s => s.at > n) || null;
+}
+
+// ── Prestige ──────────────────────────────────────────────────
+function getPrestigeMultiplier() {
+  return Math.pow(1.5, state.prestigeCount || 0);
+}
+
+function canPrestige() {
+  return state.owned[10] >= 10;
+}
+
+function prestige() {
+  if (!canPrestige()) return;
+  state.prestigeCount = (state.prestigeCount || 0) + 1;
+  state.money = STARTING_MONEY;
+  state.owned = new Array(INDUSTRIES.length).fill(0);
+  state.lastSave = now();
+  firstRender = true;
+  document.getElementById("industry-list").innerHTML = "";
+  document.getElementById("prestige-modal").classList.remove("visible");
+  render();
+  saveGame();
+}
+
+function confirmPrestige() {
+  if (!canPrestige()) return;
+  const mult = Math.pow(1.5, (state.prestigeCount || 0) + 1);
+  document.getElementById("prestige-new-mult").textContent = `×${mult.toFixed(2)}`;
+  document.getElementById("prestige-modal").classList.add("visible");
+}
+
+// ── Offline cap ───────────────────────────────────────────────
+function getOfflineMoneyCap() {
+  let highestUnlocked = 0;
+  for (let i = INDUSTRIES.length - 1; i >= 0; i--) {
+    if (isIndustryUnlocked(i)) { highestUnlocked = i; break; }
+  }
+  return getCost(highestUnlocked) * 3;
+}
+
 // ── State helpers ─────────────────────────────────────────────
 function applyPayload(saved) {
   state.money    = saved.money    ?? 10;
   state.lastSave = saved.lastSave ?? now();
-  state.owned    = saved.owned    ?? new Array(INDUSTRIES.length).fill(0);
+  const rawOwned = saved.owned    ?? new Array(INDUSTRIES.length).fill(0);
+  state.prestigeCount = rawOwned[INDUSTRIES.length] ?? saved.prestigeCount ?? 0;
+  state.owned = rawOwned.slice(0, INDUSTRIES.length);
   while (state.owned.length < INDUSTRIES.length) state.owned.push(0);
 }
 
@@ -189,7 +263,7 @@ function clearSession() { localStorage.removeItem(SESSION_KEY); }
 function cacheKey()   { return `idi_cache_${currentUserId}`; }
 function writeCache() {
   state.lastSave = now();
-  localStorage.setItem(cacheKey(), JSON.stringify({ money: state.money, lastSave: state.lastSave, owned: state.owned }));
+  localStorage.setItem(cacheKey(), JSON.stringify({ money: state.money, lastSave: state.lastSave, owned: state.owned, prestigeCount: state.prestigeCount || 0 }));
 }
 function readCache()  {
   try { const r = localStorage.getItem(cacheKey()); return r ? JSON.parse(r) : null; } catch { return null; }
@@ -201,7 +275,9 @@ function setSyncing(val) { document.getElementById("sync-dot").classList.toggle(
 
 async function saveCloud() {
   setSyncing(true);
-  const { error } = await sb.rpc("save_game", { p_user_id: currentUserId, p_money: state.money, p_owned: state.owned });
+  const ownedToSave = [...state.owned];
+  ownedToSave[INDUSTRIES.length] = state.prestigeCount || 0;
+  const { error } = await sb.rpc("save_game", { p_user_id: currentUserId, p_money: state.money, p_owned: ownedToSave });
   setSyncing(false);
   if (error) console.warn("Cloud save failed:", error.message);
 }
@@ -219,23 +295,28 @@ function applyIdleProgress(silent = false) {
   const elapsed = Math.min((now() - state.lastSave) / 1000, getRankOfflineCap());
   if (elapsed < 2 || totalIncome() === 0) return;
 
-  const rankMult  = getRankMultiplier();
-  const eventMult = 1 + getEventBonus();
+  const rankMult    = getRankMultiplier();
+  const eventMult   = 1 + getEventBonus();
+  const prestigeMult = getPrestigeMultiplier();
 
   const breakdown = INDUSTRIES.map((ind, i) => {
     if (state.owned[i] === 0) return null;
-    const earned = getIncome(i) * rankMult * eventMult * IDLE_MULTIPLIER * elapsed;
+    const earned = getIncome(i) * rankMult * eventMult * prestigeMult * IDLE_MULTIPLIER * elapsed;
     return { name: ind.name, emoji: ind.emoji, owned: state.owned[i], earned };
   }).filter(Boolean);
 
-  const total = breakdown.reduce((s, r) => s + r.earned, 0);
+  let total = breakdown.reduce((s, r) => s + r.earned, 0);
+  const cap = getOfflineMoneyCap();
+  const wasCapped = total > cap;
+  if (wasCapped) total = cap;
+
   state.money   += total;
   state.lastSave  = now();
 
-  if (!silent && elapsed >= 10) showOfflineReceipt(breakdown, total, elapsed);
+  if (!silent && elapsed >= 10) showOfflineReceipt(breakdown, total, elapsed, wasCapped);
 }
 
-function showOfflineReceipt(breakdown, total, elapsed) {
+function showOfflineReceipt(breakdown, total, elapsed, wasCapped = false) {
   document.getElementById("receipt-away-time").textContent = `Away for ${fmtTime(elapsed)}`;
   document.getElementById("receipt-rows").innerHTML = breakdown.map(r => `
     <div class="receipt-row">
@@ -249,6 +330,7 @@ function showOfflineReceipt(breakdown, total, elapsed) {
       <span>Total earned</span>
       <span class="receipt-total-val">${fmt(total)}</span>
     </div>
+    ${wasCapped ? `<div class="receipt-cap-note">⚠️ Earnings capped — come back sooner for more!</div>` : ""}
   `;
   document.getElementById("offline-receipt-modal").classList.add("visible");
 }
@@ -260,10 +342,22 @@ function buyIndustry(i) {
   if (qty <= 0) return;
   const cost = getCostN(i, qty);
   if (state.money < cost) return;
+  const prevMult = getMilestoneMultiplier(i);
   state.money   -= cost;
   state.owned[i] += qty;
+  const newMult = getMilestoneMultiplier(i);
+  if (newMult > prevMult) showMilestoneToast(i, newMult);
   render();
   saveGame();
+}
+
+function showMilestoneToast(i, mult) {
+  const toast = document.getElementById("offline-toast");
+  if (!toast) return;
+  toast.innerHTML = `<p>🏆 ${escHtml(INDUSTRIES[i].name)} milestone! Income ×${mult}</p><button onclick="this.parentElement.style.display='none'">✕</button>`;
+  toast.style.display = "flex";
+  clearTimeout(toast._hideTimer);
+  toast._hideTimer = setTimeout(() => { toast.style.display = "none"; }, 4000);
 }
 
 document.getElementById("buy-mode-bar").addEventListener("click", e => {
@@ -280,12 +374,23 @@ let firstRender = true;
 function render() {
   document.getElementById("money-display").textContent = fmt(state.money);
   const eb = getEventBonus();
+  const prestigeMult = getPrestigeMultiplier();
   const eventTag = eb > 0 ? `<span class="event-pill">+${Math.round(eb * 100)}% EVENT</span>` : "";
-  document.getElementById("income-display").innerHTML = fmt(totalIncome()) + " / sec" + eventTag;
+  const prestigeTag = state.prestigeCount > 0 ? `<span class="prestige-pill">×${prestigeMult.toFixed(2)} PRESTIGE</span>` : "";
+  document.getElementById("income-display").innerHTML = fmt(totalIncome()) + " / sec" + eventTag + prestigeTag;
 
   const rank  = RANKS[currentRankId] || RANKS[0];
   const badge = document.getElementById("rank-badge");
   if (badge) { badge.textContent = `${rank.emoji} ${rank.name}`; badge.style.display = ""; }
+
+  const prestigeBtn = document.getElementById("prestige-btn");
+  if (prestigeBtn) {
+    const can = canPrestige();
+    prestigeBtn.disabled = !can;
+    prestigeBtn.title = can ? "Reset for a permanent income boost!" : `Requires 10 Galactic Empires to prestige`;
+    const presCount = document.getElementById("prestige-count");
+    if (presCount) presCount.textContent = state.prestigeCount > 0 ? `Prestige ×${state.prestigeCount}` : "";
+  }
 
   const list = document.getElementById("industry-list");
 
@@ -297,6 +402,10 @@ function render() {
           <div class="card-name">${ind.name}</div>
           <div class="card-income" data-income="${i}"></div>
           <div class="card-cost"   data-cost="${i}"></div>
+          <div class="milestone-track">
+            <div class="milestone-bar"><div class="milestone-fill" data-mfill="${i}" style="width:0%"></div></div>
+            <div class="milestone-label" data-mlabel="${i}"></div>
+          </div>
         </div>
         <div class="card-right">
           <div class="owned-badge" data-owned="${i}">0</div>
@@ -314,22 +423,46 @@ function render() {
   }
 
   INDUSTRIES.forEach((ind, i) => {
-    const card       = list.querySelector(`[data-id="${i}"]`);
-    const isUnlocked = i === 0 || state.owned[i - 1] > 0;
-    card.style.display = isUnlocked ? "" : "none";
-    if (!isUnlocked) return;
+    const card     = list.querySelector(`[data-id="${i}"]`);
+    const unlocked = isIndustryUnlocked(i);
+    const nextLocked = !unlocked && (i === 0 || isIndustryUnlocked(i - 1));
+
+    if (!unlocked && !nextLocked) {
+      card.style.display = "none";
+      return;
+    }
+    card.style.display = "";
+
+    if (!unlocked) {
+      const threshold = getUnlockThreshold(i);
+      const prevOwned = state.owned[i - 1] || 0;
+      const pct = Math.min(100, (prevOwned / threshold) * 100);
+      card.classList.add("card-locked-next");
+      card.classList.remove("affordable", "locked");
+      card.querySelector("[data-income]").textContent = `Locked — need ${threshold}× ${INDUSTRIES[i-1].name}`;
+      card.querySelector("[data-cost]").textContent   = `${prevOwned}/${threshold} owned`;
+      card.querySelector("[data-owned]").textContent  = "🔒";
+      card.querySelector("[data-buy]").disabled       = true;
+      card.querySelector("[data-mfill]").style.width  = pct + "%";
+      card.querySelector("[data-mlabel]").textContent = `${prevOwned}/${threshold} to unlock`;
+      return;
+    }
+
+    card.classList.remove("card-locked-next");
 
     const cost1         = getCost(i);
     const income        = getIncome(i);
+    const mileMult      = getMilestoneMultiplier(i);
     const canAfford     = state.money >= cost1;
     const maxAffordable = getMaxBuy(i);
     const resolvedQty   = buyQty === 'max' ? maxAffordable : Math.min(+buyQty, maxAffordable);
     const buyCost       = resolvedQty > 0 ? getCostN(i, resolvedQty) : cost1;
     const btnDisabled   = resolvedQty === 0;
 
+    const mileLabel = mileMult > 1 ? ` [×${mileMult} milestone]` : "";
     card.querySelector("[data-income]").textContent =
       state.owned[i] > 0
-        ? `${fmt(income)} / sec  (${fmt(ind.baseIncome)} each)`
+        ? `${fmt(income)} / sec${mileLabel}  (${fmt(ind.baseIncome * mileMult)} each)`
         : `${fmt(ind.baseIncome)} / sec each`;
 
     card.querySelector("[data-cost]").textContent =
@@ -339,6 +472,20 @@ function render() {
     card.querySelector("[data-buy]").disabled      = btnDisabled;
     card.classList.toggle("affordable", canAfford);
     card.classList.toggle("locked",     !canAfford);
+
+    const nextMs = getNextMilestone(i);
+    const mfill  = card.querySelector("[data-mfill]");
+    const mlabel = card.querySelector("[data-mlabel]");
+    if (nextMs) {
+      const prevStep = [...MILESTONE_STEPS].reverse().find(s => s.at <= state.owned[i]);
+      const prevAt   = prevStep ? prevStep.at : 0;
+      const pct      = Math.min(100, ((state.owned[i] - prevAt) / (nextMs.at - prevAt)) * 100);
+      mfill.style.width  = pct + "%";
+      mlabel.textContent = `${state.owned[i]}/${nextMs.at} → ×${nextMs.mult}`;
+    } else {
+      mfill.style.width  = "100%";
+      mlabel.textContent = `✓ Max ×${mileMult}`;
+    }
   });
 }
 
