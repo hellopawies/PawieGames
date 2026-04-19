@@ -56,12 +56,21 @@ header h1 span { color: #6c63ff; }
 .meter-fill.notoriety  { background: #e05070; }
 
 @media (max-width: 640px) {
+  header { flex-wrap: wrap; padding: 8px 14px; gap: 8px; }
+  header h1 { font-size: 1rem; flex: 1; }
   .hdr-level { display: none; }
-  .hud-meter-label { display: none; }
+  .hdr-right {
+    width: 100%; margin-left: 0;
+    justify-content: space-between; gap: 8px;
+  }
+  .hud-meter { flex: 1; justify-content: center; }
+  .meter-bar { flex: 1; max-width: 80px; }
+  .hdr-user { font-size: .8rem; }
 }
 
 /* ── Layout ── */
 #layout { display: flex; height: calc(100vh - 45px); }
+@media (max-width: 640px) { #layout { height: calc(100vh - 76px); } }
 
 /* ── Terminal ── */
 #terminal {
