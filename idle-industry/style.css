@@ -214,8 +214,57 @@ body {
 }
 
 #footer {
-  text-align: center; padding: 12px; position: fixed; bottom: 0;
+  text-align: center; padding: 10px 16px; position: fixed; bottom: 0;
   width: 100%; background: var(--bg); border-top: 1px solid #1e1e2e;
+}
+
+#prestige-bar {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+#prestige-count { font-size: 0.78rem; color: var(--yellow); font-weight: 600; }
+#prestige-btn {
+  background: linear-gradient(135deg, #6c63ff, #c084fc);
+  color: #fff; border: none; border-radius: 9px;
+  padding: 8px 20px; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s; white-space: nowrap;
+}
+#prestige-btn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
+#prestige-btn:disabled { opacity: 0.35; cursor: not-allowed; background: var(--surface2); }
+
+/* Milestone track inside card */
+.milestone-track { margin-top: 5px; }
+.milestone-bar {
+  height: 3px; background: #2a2a3e; border-radius: 2px; overflow: hidden; margin-bottom: 2px;
+}
+.milestone-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent), #c084fc);
+  border-radius: 2px; transition: width 0.3s ease;
+}
+.milestone-label {
+  font-size: 0.68rem; color: var(--muted);
+}
+
+/* Locked-next card (next to unlock) */
+.card-locked-next {
+  opacity: 0.55; border-style: dashed !important; border-color: #3a3a5e !important;
+}
+.card-locked-next .milestone-fill {
+  background: linear-gradient(90deg, var(--green), #4caf8a);
+}
+
+/* Prestige pill in income display */
+.prestige-pill {
+  display: inline-block; margin-left: 6px;
+  background: rgba(108,99,255,0.18); border: 1px solid #c084fc;
+  color: #c084fc; border-radius: 10px; padding: 1px 7px;
+  font-size: 0.68rem; font-weight: 700; vertical-align: middle;
+}
+
+/* Offline receipt cap note */
+.receipt-cap-note {
+  font-size: 0.78rem; color: var(--yellow); margin-top: 8px;
+  text-align: center; padding: 6px 10px;
+  background: rgba(240,192,64,0.1); border-radius: 7px;
 }
 
 @keyframes fadeIn {

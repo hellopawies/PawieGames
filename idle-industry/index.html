@@ -51,6 +51,12 @@
   </div>
 
   <div id="footer">
+    <div id="prestige-bar">
+      <span id="prestige-count"></span>
+      <button id="prestige-btn" onclick="confirmPrestige()" disabled title="Requires 10 Galactic Empires">
+        ✨ Prestige
+      </button>
+    </div>
   </div>
 </div>
 
@@ -182,7 +188,26 @@
   </div>
 </div>
 
-<!-- Changelog modal -->
+<!-- Prestige modal -->
+<div class="modal-overlay" id="prestige-modal">
+  <div class="modal-box">
+    <div class="modal-title">✨ Prestige Reset</div>
+    <div style="font-size:0.88rem;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+      Reset your money and all buildings for a <strong style="color:var(--yellow)">permanent income bonus</strong>.<br>
+      New multiplier: <strong id="prestige-new-mult" style="color:var(--green)"></strong>
+    </div>
+    <ul style="font-size:0.82rem;color:var(--muted);padding-left:18px;margin-bottom:16px;line-height:1.8;">
+      <li>All buildings reset to 0</li>
+      <li>Money resets to starting amount</li>
+      <li>Permanent income multiplier stacks each prestige</li>
+    </ul>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="document.getElementById('prestige-modal').classList.remove('visible')">Cancel</button>
+      <button class="btn-primary" onclick="prestige()">Confirm Prestige</button>
+    </div>
+  </div>
+</div>
+
 <!-- Leaderboard modal -->
 <div class="modal-overlay" id="leaderboard-modal">
   <div class="modal-box">
