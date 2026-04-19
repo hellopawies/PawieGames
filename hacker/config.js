@@ -1,10 +1,18 @@
 const TOOLS = {
-  basic_cracker:    { name: 'Basic Cracker',    desc: 'Dictionary attack on SSH. Works on low-complexity passwords.' },
-  wordlist_pro:     { name: 'Wordlist Pro',      desc: 'Extended dictionary. Cracks medium-complexity passwords.' },
-  sqli_kit:         { name: 'SQLi Kit',          desc: 'Automated SQL injection toolkit for web login forms.' },
-  proxy_basic:      { name: 'Basic Proxy',       desc: 'Passively routes traffic through a hop — reduces all trace by 35%.' },
-  port_scanner_pro: { name: 'Port Scanner Pro',  desc: 'Deep scan reveals stealth ports and service fingerprints.' },
-  bruteforce_v2:    { name: 'Bruteforce v2',     desc: 'GPU-accelerated cracker. Handles high-complexity passwords.' },
+  basic_cracker:    { name: 'Basic Cracker',       desc: 'Dictionary attack on SSH. Works on low-complexity passwords.' },
+  wordlist_pro:     { name: 'Wordlist Pro',         desc: 'Extended dictionary. Cracks medium-complexity passwords.' },
+  sqli_kit:         { name: 'SQLi Kit',             desc: 'Automated SQL injection toolkit for web login forms.' },
+  proxy_basic:      { name: 'Basic Proxy',          desc: 'Passively routes traffic through a hop — reduces all trace by 35%.' },
+  port_scanner_pro: { name: 'Port Scanner Pro',     desc: 'Deep scan reveals stealth ports and service fingerprints.' },
+  bruteforce_v2:    { name: 'Bruteforce v2',        desc: 'GPU-accelerated cracker. Handles high-complexity passwords.' },
+  packet_sniffer:   { name: 'Packet Sniffer',       desc: 'Capture raw network traffic. Reveals credentials in cleartext protocols like SIP and FTP.' },
+  fuzzer:           { name: 'HTTP Fuzzer',          desc: 'Brute-force web paths and hidden endpoints. Auto-authenticates on vulnerable admin panels.' },
+  exploit_db:       { name: 'ExploitDB Client',     desc: 'Search and deploy known CVE exploits against unpatched services.' },
+  cryptobreaker:    { name: 'CryptoBreaker',        desc: 'Decrypt AES-256 encrypted files using extracted key material.' },
+  log_wiper:        { name: 'Log Wiper',            desc: 'Scrub auth logs and access trails from a compromised host.' },
+  steganographer:   { name: 'Steganographer',       desc: 'Extract hidden payloads from image files using LSB steganalysis.' },
+  rootkit_mk2:      { name: 'Rootkit Mk.II',        desc: 'Deploy a persistent backdoor — auto-authenticates on future connections.' },
+  vpn_tunnel:       { name: 'VPN Tunnel',           desc: 'Encrypt all traffic through a multi-hop chain — reduces trace gain by 50%.' },
 };
 
 // ── Darknet Shop ──────────────────────────────────────────────
