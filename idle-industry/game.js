@@ -142,8 +142,9 @@ function totalIncome() { return INDUSTRIES.reduce((s, _, i) => s + getIncome(i),
 function getCostN(i, n) {
   if (n <= 0) return 0;
   const base = INDUSTRIES[i].baseCost, s = state.owned[i];
-  if (n === 1) return Math.ceil(base * Math.pow(COST_SCALE, s));
-  return Math.ceil(base * Math.pow(COST_SCALE, s) * (Math.pow(COST_SCALE, n) - 1) / (COST_SCALE - 1));
+  const first = base * Math.pow(COST_SCALE, s);
+  if (n === 1 || Math.abs(COST_SCALE - 1) < 1e-9) return Math.ceil(first * n);
+  return Math.ceil(first * (Math.pow(COST_SCALE, n) - 1) / (COST_SCALE - 1));
 }
 
 function getMaxBuy(i) {
