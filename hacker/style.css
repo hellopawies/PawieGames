@@ -1,3 +1,6 @@
+/* Hacker Story — game-specific styles (shared.css loaded first) */
+
+/* Green terminal theme — overrides the purple defaults from shared.css */
 :root {
   --bg:        #0a0f0a;
   --surface:   #0d140d;
@@ -11,8 +14,6 @@
   --muted:     #3a6b3a;
   --text:      #b8f5b8;
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   height: 100%;
@@ -34,8 +35,6 @@ header {
   font-family: 'Segoe UI', system-ui, sans-serif;
   color: #e8e8f0;
 }
-.hdr-back { color: #888899; text-decoration: none; font-size: .8rem; font-weight: 600; transition: color .15s; white-space: nowrap; }
-.hdr-back:hover { color: #e8e8f0; }
 header h1 { font-size: 1.1rem; font-weight: 700; white-space: nowrap; }
 header h1 span { color: #6c63ff; }
 .hdr-level {

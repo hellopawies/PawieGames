@@ -1,0 +1,203 @@
+/* ══════════════════════════════════════════════════════════════
+   PawieGames — Shared Foundation CSS
+   Loaded first by every game and the hub. Game-specific CSS
+   files come after and can extend or override anything here.
+══════════════════════════════════════════════════════════════ */
+
+/* ── Design tokens (purple/dark theme — default for all games) ── */
+:root {
+  --bg:               #0f0f13;
+  --surface:          #1a1a24;
+  --surface2:         #22223a;
+  --accent:           #6c63ff;
+  --accent-hover:     #857df8;
+  --accent-disabled:  #3a3760;
+  --text:             #e8e8f0;
+  --muted:            #888899;
+  --green:            #4caf8a;
+  --yellow:           #f0c040;
+  --red:              #e05070;
+}
+
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+[hidden] { display: none !important; }
+
+/* ── Base body ── */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ── Header (hub-consistent across all games) ── */
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #1a1a24;
+  border-bottom: 1px solid #2a2a3e;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--accent-hover);
+  white-space: nowrap;
+  flex: 1;
+}
+
+header h1 span { color: var(--text); }
+
+/* ── Back link ── */
+.hdr-back {
+  color: #888899;
+  text-decoration: none;
+  font-size: .8rem;
+  font-weight: 600;
+  transition: color .15s;
+  white-space: nowrap;
+}
+.hdr-back:hover { color: #e8e8f0; }
+
+/* ── Modal overlay ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.72);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 20px;
+}
+.modal-overlay.visible { display: flex; }
+
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--surface2);
+  border-radius: 14px;
+  padding: 24px 28px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 12px 48px rgba(0,0,0,.7);
+}
+
+.modal-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* ── Auth / form fields ── */
+.field { margin-bottom: 14px; }
+
+.field label {
+  display: block;
+  font-size: .78rem;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.field input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid #3a3a5e;
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: .9rem;
+  outline: none;
+  transition: border-color .15s;
+}
+.field input:focus { border-color: var(--accent); }
+
+/* ── Auth submit button ── */
+#auth-submit {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 11px;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s;
+  margin-bottom: 14px;
+}
+#auth-submit:hover    { background: var(--accent-hover); }
+#auth-submit:disabled { background: var(--accent-disabled); cursor: not-allowed; }
+
+/* ── Auth toggle link ── */
+#auth-toggle { text-align: center; font-size: .82rem; color: var(--muted); }
+#auth-toggle a { color: var(--accent-hover); cursor: pointer; text-decoration: underline; }
+
+/* ── Auth error ── */
+#auth-error { font-size: .8rem; margin-bottom: 14px; min-height: 18px; }
+#auth-error.err { color: var(--red); }
+#auth-error.ok  { color: var(--green); }
+
+/* ── Changelog (shared between hub and games) ── */
+.cl-entry { margin-bottom: 20px; }
+.cl-entry:last-child { margin-bottom: 4px; }
+
+.cl-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+
+.cl-ver-tag {
+  font-size: .72rem;
+  font-weight: 800;
+  color: var(--accent-hover);
+  background: rgba(108,99,255,.15);
+  border: 1px solid rgba(108,99,255,.3);
+  border-radius: 5px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+
+.cl-date { font-size: .72rem; color: var(--muted); }
+
+.cl-items { list-style: none; padding: 0; margin: 0; }
+
+.cl-items li {
+  font-size: .82rem;
+  color: var(--text);
+  padding: 4px 0 4px 16px;
+  position: relative;
+  border-bottom: 1px solid rgba(42,42,62,.4);
+  line-height: 1.45;
+}
+.cl-items li:last-child { border-bottom: none; }
+.cl-items li::before {
+  content: "▸";
+  position: absolute;
+  left: 2px;
+  color: var(--accent-hover);
+  font-size: .7rem;
+  top: 5px;
+}
+
+/* ── Shared animations ── */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

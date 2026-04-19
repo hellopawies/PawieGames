@@ -6,21 +6,9 @@
 <title>PawieGames</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f0f13'/%3E%3Ctext x='32' y='44' font-family='system-ui' font-size='38' font-weight='900' fill='%236c63ff' text-anchor='middle'%3EPG%3C/text%3E%3C%2Fsvg%3E">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link rel="stylesheet" href="shared.css">
 <style>
-  :root {
-    --bg: #0f0f13;
-    --surface: #1a1a24;
-    --surface2: #22223a;
-    --accent: #6c63ff;
-    --accent-hover: #857df8;
-    --text: #e8e8f0;
-    --muted: #888899;
-    --green: #4caf8a;
-    --yellow: #f0c040;
-    --red: #e05070;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+  body { min-height: 100vh; }
 
   /* ── Auth screen ── */
   #auth-screen {
@@ -62,26 +50,6 @@
   .auth-logo span { color: var(--accent); }
   .auth-tagline { font-size: .82rem; color: var(--muted); margin-bottom: 28px; }
   #auth-title { font-size: 1rem; font-weight: 600; margin-bottom: 18px; }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: .78rem; color: var(--muted); margin-bottom: 5px; }
-  .field input {
-    width: 100%; background: var(--surface2); border: 1px solid #3a3a5e;
-    border-radius: 8px; color: var(--text); padding: 10px 12px;
-    font-size: .9rem; outline: none; transition: border-color .15s;
-  }
-  .field input:focus { border-color: var(--accent); }
-  #auth-error { font-size: .8rem; margin-bottom: 14px; min-height: 18px; }
-  #auth-error.err { color: var(--red); }
-  #auth-error.ok  { color: var(--green); }
-  #auth-submit {
-    width: 100%; background: var(--accent); color: #fff; border: none;
-    border-radius: 9px; padding: 11px; font-size: .95rem; font-weight: 600;
-    cursor: pointer; transition: background .15s; margin-bottom: 14px;
-  }
-  #auth-submit:hover    { background: var(--accent-hover); }
-  #auth-submit:disabled { background: #3a3760; cursor: not-allowed; }
-  #auth-toggle { text-align: center; font-size: .82rem; color: var(--muted); }
-  #auth-toggle a { color: var(--accent-hover); cursor: pointer; text-decoration: underline; }
 
   /* ── Hub screen ── */
   #hub-screen { display: none; flex-direction: column; min-height: 100vh; }
@@ -112,24 +80,10 @@
   .card-title { font-size: 1.1rem; font-weight: 700; }
   .card-version { font-size: .65rem; font-weight: 700; color: var(--muted); border: 1px solid var(--surface2); border-radius: 5px; padding: 2px 6px; margin-left: 6px; vertical-align: middle; letter-spacing: .04em; cursor: pointer; background: none; font-family: inherit; transition: border-color .15s, color .15s; }
   .card-version:hover { border-color: var(--accent); color: var(--accent-hover); }
-
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
-  .modal-overlay.visible { display: flex; }
-  .modal-box { background: var(--surface); border: 1px solid var(--surface2); border-radius: 14px; padding: 24px; width: 440px; max-width: 100%; max-height: 80vh; overflow-y: auto; box-shadow: 0 12px 48px rgba(0,0,0,.6); }
-  .modal-title { font-size: 1rem; font-weight: 800; margin-bottom: 18px; letter-spacing: .02em; }
-  .modal-actions { margin-top: 18px; display: flex; justify-content: flex-end; }
+  /* modal-box width override for hub changelog */
+  .modal-box { width: 440px; max-height: 80vh; overflow-y: auto; }
   .btn-primary { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 8px 18px; font-size: .85rem; font-weight: 600; cursor: pointer; transition: background .15s; }
   .btn-primary:hover { background: var(--accent-hover); }
-
-  .cl-entry { margin-bottom: 20px; }
-  .cl-entry:last-child { margin-bottom: 4px; }
-  .cl-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .cl-ver-tag { font-size: .72rem; font-weight: 800; letter-spacing: .04em; color: var(--accent-hover); background: rgba(108,99,255,.15); border: 1px solid rgba(108,99,255,.3); border-radius: 5px; padding: 2px 7px; }
-  .cl-date { font-size: .72rem; color: var(--muted); }
-  .cl-items { list-style: none; padding: 0; margin: 0; }
-  .cl-items li { font-size: .82rem; color: var(--text); padding: 5px 0 5px 18px; border-bottom: 1px solid #1e1e2e; position: relative; line-height: 1.45; }
-  .cl-items li:last-child { border-bottom: none; }
-  .cl-items li::before { content: "▸"; position: absolute; left: 2px; color: var(--accent-hover); font-size: .7rem; top: 6px; }
   .card-desc { font-size: .875rem; color: var(--muted); line-height: 1.5; }
   .card-tag { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: .2rem .55rem; border-radius: 99px; background: rgba(108,99,255,.15); color: var(--accent); align-self: flex-start; }
   #admin-section { margin-top: 2rem; }

@@ -5,27 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Leaderboard — PawieGames</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<link rel="stylesheet" href="../shared.css">
 <style>
-  :root {
-    --bg: #0f0f13;
-    --surface: #1a1a24;
-    --surface2: #22223a;
-    --accent: #6c63ff;
-    --accent-hover: #857df8;
-    --text: #e8e8f0;
-    --muted: #888899;
-    --green: #4caf8a;
-    --yellow: #f0c040;
-    --red: #e05070;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
-
-  header { display: flex; align-items: center; gap: 12px; padding: 12px 20px; background: var(--surface); border-bottom: 1px solid #2a2a3e; box-shadow: 0 2px 12px rgba(0,0,0,0.4); position: sticky; top: 0; z-index: 100; }
-  header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: .03em; color: var(--accent-hover); white-space: nowrap; flex: 1; }
-  header h1 span { color: var(--text); }
-  .hdr-back { color: var(--muted); text-decoration: none; font-size: .8rem; font-weight: 600; transition: color .15s; white-space: nowrap; }
-  .hdr-back:hover { color: var(--text); }
+  body { min-height: 100vh; }
 
   main { max-width: 680px; width: 100%; margin: 2rem auto; padding: 0 1.5rem; }
 

@@ -1,25 +1,10 @@
+/* Idle Industry — game-specific styles (shared.css loaded first) */
+
 :root {
-  --bg: #0f0f13;
-  --surface: #1a1a24;
-  --surface2: #22223a;
-  --accent: #6c63ff;
-  --accent-hover: #857df8;
-  --accent-disabled: #3a3760;
-  --text: #e8e8f0;
-  --muted: #888899;
-  --green: #4caf8a;
-  --yellow: #f0c040;
-  --red: #e05070;
+  --accent-disabled: #3a3760; /* not in shared.css; needed for disabled buttons */
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Segoe UI', system-ui, sans-serif;
-  min-height: 100vh;
-}
+body { min-height: 100vh; }
 
 /* ── Auth screen ── */
 #auth-screen {
@@ -60,43 +45,6 @@ body {
 #auth-card .tagline { font-size: 0.82rem; color: var(--muted); margin-bottom: 28px; }
 #auth-title { font-size: 1rem; font-weight: 600; margin-bottom: 18px; }
 
-.field { margin-bottom: 14px; }
-.field label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 5px; }
-.field input {
-  width: 100%;
-  background: var(--surface2);
-  border: 1px solid #3a3a5e;
-  border-radius: 8px;
-  color: var(--text);
-  padding: 10px 12px;
-  font-size: 0.9rem;
-  outline: none;
-  transition: border-color 0.15s;
-}
-.field input:focus { border-color: var(--accent); }
-
-#auth-error { font-size: 0.8rem; margin-bottom: 14px; min-height: 18px; }
-#auth-error.err { color: var(--red); }
-#auth-error.ok  { color: var(--green); }
-
-#auth-submit {
-  width: 100%;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 9px;
-  padding: 11px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-  margin-bottom: 14px;
-}
-#auth-submit:hover    { background: var(--accent-hover); }
-#auth-submit:disabled { background: var(--accent-disabled); cursor: not-allowed; }
-
-#auth-toggle { text-align: center; font-size: 0.82rem; color: var(--muted); }
-#auth-toggle a { color: var(--accent-hover); cursor: pointer; text-decoration: underline; }
 
 /* ── Game screen ── */
 #game-screen { display: none; position: relative; z-index: 1; }
@@ -152,7 +100,6 @@ body {
 .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
 .sync-dot.syncing { background: var(--yellow); animation: pulse 1s infinite; }
 
-@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 .hdr-btn {
   background: var(--surface2); border: 1px solid #3a3a5e;
@@ -273,10 +220,6 @@ body {
   background: rgba(240,192,64,0.1); border-radius: 7px;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 
 /* ════════════════════════════════════════════════════════════
    ADMIN SCREEN
@@ -416,19 +359,9 @@ table.users-tbl .time-cell  { color: var(--muted); font-size: 0.8rem; }
 .btn-refresh:hover { border-color: var(--accent); }
 .empty-state { text-align: center; color: var(--muted); padding: 40px; font-size: 0.9rem; }
 
-/* Reset password modal */
-.modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 200;
-  display: none; justify-content: center; align-items: center;
-}
-.modal-overlay.visible { display: flex; }
-.modal-box {
-  background: var(--surface); border: 1px solid #3a3a5e; border-radius: 14px;
-  padding: 28px 28px 22px; width: 380px; max-width: calc(100vw - 32px);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.7);
-}
-.modal-title { font-size: 1rem; font-weight: 700; margin-bottom: 16px; }
-.modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+/* modal-box size overrides for game-specific modals */
+.modal-box { width: 380px; }
+.modal-actions { gap: 10px; }
 
 /* Rank badge in game header */
 .rank-badge {
@@ -587,24 +520,8 @@ table.users-tbl .time-cell  { color: var(--muted); font-size: 0.8rem; }
 .receipt-total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px solid #2a2a3e; font-weight: 700; font-size: .95rem; }
 .receipt-total-val { color: var(--green); font-size: 1.05rem; }
 
-/* Changelog */
+/* Changelog modal size */
 #changelog-modal .modal-box { width: 440px; max-height: 80vh; overflow-y: auto; }
-.cl-entry { margin-bottom: 20px; }
-.cl-entry:last-child { margin-bottom: 4px; }
-.cl-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.cl-ver-tag {
-  font-size: 0.75rem; font-weight: 800; color: var(--accent-hover);
-  background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.28);
-  border-radius: 5px; padding: 2px 8px; flex-shrink: 0;
-}
-.cl-date { font-size: 0.72rem; color: var(--muted); }
-.cl-items { list-style: none; padding: 0; margin: 0; }
-.cl-items li {
-  font-size: 0.83rem; color: var(--text); padding: 4px 0 4px 16px;
-  position: relative; border-bottom: 1px solid rgba(42,42,62,0.4);
-}
-.cl-items li:last-child { border-bottom: none; }
-.cl-items li::before { content: "▸"; position: absolute; left: 2px; color: var(--accent-hover); font-size: 0.7rem; top: 5px; }
 
 /* Rank select in accounts table */
 .rank-select {
@@ -721,9 +638,6 @@ table.users-tbl .time-cell  { color: var(--muted); font-size: 0.8rem; }
 .bm-btn:hover  { border-color: var(--accent); color: var(--text); }
 .bm-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-/* ── Back-to-hub link (in game and admin headers) ── */
-.hdr-back { color: var(--muted); text-decoration: none; font-size: .8rem; font-weight: 600; transition: color 0.15s; white-space: nowrap; }
-.hdr-back:hover { color: var(--text); }
 
 /* ── Back-to-hub banner (auth screen only) ── */
 #back-banner {
