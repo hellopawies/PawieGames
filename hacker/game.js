@@ -37,12 +37,13 @@ async function init() {
 }
 
 function applyPayload(saved) {
-  G.missionIdx      = saved.missionIdx   ?? 0;
-  G.missionsDone    = saved.missionsDone ?? [];
-  G.tools           = saved.tools        ?? ['basic_cracker'];
-  G.crypto          = saved.crypto       ?? 0;
-  G.notoriety       = saved.notoriety    ?? 0;
-  G.freeMode        = saved.freeMode     ?? (G.missionIdx >= MISSIONS.length);
+  G.missionIdx      = saved.missionIdx      ?? 0;
+  G.missionsDone    = saved.missionsDone    ?? [];
+  G.tools           = saved.tools           ?? ['basic_cracker'];
+  G.crypto          = saved.crypto          ?? 0;
+  G.notoriety       = saved.notoriety       ?? 0;
+  G.freeMode        = saved.freeMode        ?? (G.missionIdx >= MISSIONS.length);
+  G.trace           = saved.trace           ?? 0;
   G.downloadedFiles = saved.downloadedFiles ?? [];
   if (saved.savedQuest) G.currentQuest = restoreQuest(saved.savedQuest);
 }
@@ -72,6 +73,7 @@ function saveState() {
     crypto:           G.crypto,
     notoriety:        G.notoriety,
     freeMode:         G.freeMode,
+    trace:            G.trace,
     downloadedFiles:  G.downloadedFiles,
     savedQuest,
   });
@@ -108,8 +110,8 @@ function getCurrentMission() {
 }
 
 async function startMission(isResume = false) {
-  G.connected = null; G.trace = 0;
-  if (!isResume) G.downloadedFiles = [];
+  G.connected = null;
+  if (!isResume) { G.trace = 0; G.downloadedFiles = []; }
   updateHUD(); updateSidebar();
 
   if (G.freeMode || G.missionIdx >= MISSIONS.length) {
