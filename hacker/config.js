@@ -13,6 +13,10 @@ const TOOLS = {
   steganographer:   { name: 'Steganographer',       desc: 'Extract hidden payloads from image files using LSB steganalysis.' },
   rootkit_mk2:      { name: 'Rootkit Mk.II',        desc: 'Deploy a persistent backdoor — auto-authenticates on future connections.' },
   vpn_tunnel:       { name: 'VPN Tunnel',           desc: 'Encrypt all traffic through a multi-hop chain — reduces trace gain by 50%.' },
+  hash_cracker:     { name: 'Hash Cracker',         desc: 'Offline dictionary and brute-force attack against MD5, SHA-1, NTLM, and bcrypt hashes.' },
+  ad_toolkit:       { name: 'AD Toolkit',           desc: 'Active Directory attack suite — Kerberoasting, AS-REP roasting, and domain path enumeration.' },
+  osint_suite:      { name: 'OSINT Suite',          desc: 'Passive recon toolkit — harvests emails, subdomains, and exposed credentials from public sources.' },
+  shell_builder:    { name: 'Shell Builder',        desc: 'Reverse shell payload generator — staged bash, python, and netcat payloads.' },
 };
 
 // ── Darknet Shop ──────────────────────────────────────────────
@@ -31,6 +35,10 @@ const SHOP = {
     { id: 'steganographer',   price: 440,  name: 'Steganographer',        desc: 'Extract hidden payloads from image files via LSB steganalysis.' },
     { id: 'rootkit_mk2',      price: 750,  name: 'Rootkit Mk.II',         desc: 'Install persistent backdoor — auto-auth on future connects.' },
     { id: 'vpn_tunnel',       price: 900,  name: 'VPN Tunnel',            desc: 'Multi-hop encrypted chain — reduces all trace gain by 50%.' },
+    { id: 'hash_cracker',     price: 320,  name: 'Hash Cracker',          desc: 'Crack MD5/SHA/NTLM/bcrypt hashes offline with dictionary attacks.' },
+    { id: 'osint_suite',      price: 260,  name: 'OSINT Suite',           desc: 'Passive recon — emails, subdomains, and breached credentials.' },
+    { id: 'shell_builder',    price: 310,  name: 'Shell Builder',         desc: 'Generate netcat/bash/python reverse shell payloads.' },
+    { id: 'ad_toolkit',       price: 580,  name: 'AD Toolkit',            desc: 'Kerberoasting, AS-REP roasting, BloodHound-style domain mapping.' },
   ],
   upgrades: [
     { id: 'proxy_chain',      requires: 'proxy_basic',    price: 450, name: 'Proxy Chain',           desc: 'Triple-hop routing — boosts trace reduction from 35% to 60%.' },
@@ -40,6 +48,9 @@ const SHOP = {
     { id: 'deep_packet',      requires: 'packet_sniffer', price: 420, name: 'Deep Packet Inspector', desc: 'Full protocol decode — sniff reveals passwords, not just metadata.' },
     { id: 'fuzz_turbo',       requires: 'fuzzer',         price: 500, name: 'Fuzz Turbo',            desc: 'Parallelised engine — faster fuzzing and 30% lower trace on HTTP.' },
     { id: 'zero_day',         requires: 'exploit_db',     price: 850, name: 'Zero-Day Bundle',       desc: 'Unreleased CVE exploits — bypass even hardened SSH without a crack.' },
+    { id: 'john_rules',       requires: 'hash_cracker',  price: 380, name: 'John Rules',            desc: 'Advanced wordlist mutation — cracks complex hashes faster with rule-based transforms.' },
+    { id: 'osint_deep',       requires: 'osint_suite',   price: 420, name: 'OSINT Deep',            desc: 'Dark web scan — finds breached credentials and internal document leaks.' },
+    { id: 'ad_extended',      requires: 'ad_toolkit',    price: 650, name: 'AD Extended',           desc: 'Full BloodHound + LDAP enum — maps attack paths and group policy abuse vectors.' },
   ],
   bribes: [
     { id: 'ghost_protocol', price: 120, name: 'Ghost Protocol', desc: 'Flush your current trace to 0. Use any time mid-op.' },
@@ -82,6 +93,24 @@ const MISSIONS = [
         'credentials.txt': 'admin:hunter2\nbackup_user:letmein\ndb_reader:Veridian2024!',
         'server.log':      '[INFO] System boot OK\n[INFO] SSH daemon started\n[WARN] Failed login from 10.0.0.89\n[INFO] User "admin" logged in from 10.0.0.1',
       },
+      enumVectors: [
+        'SUID binary found: /usr/bin/find  — can be abused via GTFOBins',
+        'Writable cron job: /etc/cron.d/backup  — owned by sysadmin group',
+        'Sudo rule: sysadmin ALL=(ALL) NOPASSWD: /usr/bin/vim',
+        'Kernel: Linux 4.4.0-116 — vulnerable to CVE-2017-16995 (eBPF privesc)',
+      ],
+      privescVuln: 'sudo_vim',
+      dumpFile: {
+        name: 'shadow.txt',
+        content: [
+          '# /etc/shadow — cracked by Hash Cracker',
+          'root:$6$rounds=5000$randomsalt$HASH_A:19000:0:99999:7:::',
+          'admin:$6$rounds=5000$randomsalt$HASH_B:19000:0:99999:7:::',
+          'sysadmin:$6$rounds=5000$randomsalt$HASH_C:19000:0:99999:7:::',
+          '',
+          '>>> RUN "hash shadow.txt" TO CRACK <<<',
+        ].join('\n'),
+      },
     },
     reward:  { crypto: 50 },
     unlocks: [],
@@ -116,6 +145,27 @@ const MISSIONS = [
       files: {
         'user_records.csv':  'id,name,email,dept\n1,Marcus Webb,m.webb@veridian.corp,Engineering\n2,Diana Cross,d.cross@veridian.corp,Executive\n3,Yusuf Karim,y.karim@veridian.corp,Security',
         'internal_memo.txt': '[CONFIDENTIAL]\nAll staff: the Q2 audit has been moved forward.\nDo not discuss Project Helios externally.\n— D. Cross, CEO',
+      },
+      lfiPaths: {
+        '../../etc/passwd':  'root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nveridian:x:1001:1001::/home/veridian:/bin/bash',
+        '../../etc/hosts':   '127.0.0.1 localhost\n10.0.0.1  veridian-gw\n10.0.0.12 veridian-srv-01\n10.0.0.45 veridian-web-02\n10.0.0.91 veridian-exec-ceo\n172.20.0.2 helios-internal',
+        '../../var/log/auth.log': '2026-04-19 03:44:01 sshd: Accepted password for veridian from 10.0.0.1\n2026-04-19 03:47:22 sshd: Accepted password for admin from 185.220.101.47',
+      },
+      idorFiles: {
+        param: 'user_id',
+        records: {
+          '1': 'id=1,name=Marcus Webb,salary=94000,clearance=L2,notes=Helios_aware',
+          '2': 'id=2,name=Diana Cross,salary=580000,clearance=L5,notes=Helios_architect',
+          '3': 'id=3,name=Yusuf Karim,salary=112000,clearance=L4,notes=Helios_security_lead',
+          '99': 'id=99,name=VOSS_LIAISON,salary=0,clearance=L6,notes=EXTERNAL — Senator office contact',
+        },
+      },
+      xssPayload: {
+        cookieData: 'session=eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyIjoiZC5jcm9zc0B2ZXJpZGlhbi5jb3JwIiwicm9sZSI6ImFkbWluIn0.STOLEN\ncsrf_token=8f3dc92a1b4e\nremember_me=veridian_admin',
+      },
+      ssrfTargets: {
+        'http://localhost/admin': '[Veridian Internal Admin]\nHelios pipeline status: ACTIVE\nSubject count: 2,847,221\nAPI key: hlsx_31f9a2b8\n/admin/shutdown  [POST]',
+        'http://169.254.169.254/latest/meta-data': '[AWS IMDSv1 — Cloud Metadata]\ninstance-id: i-0a1b2c3d4e5f\niam/security-credentials/veridian-prod-role\nAccessKeyId: AKIAIOSFODNN7EXAMPLE\nSecretAccessKey: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY',
       },
     },
     reward:  { crypto: 120 },
@@ -230,6 +280,21 @@ const MISSIONS = [
         'blacksite_manifest.txt': '[CLASSIFIED — EYES ONLY]\nProject Helios — Phase 3\nAuthorised: Senator R. Voss, D. Cross (Veridian)\nObjective: civilian data pipeline for pre-crime profiling\nStatus: ACTIVE\nCover: corporate wellness programme\nWitnesses: [REDACTED x7]',
         'access_log.txt':         '2026-04-01 AUTH OK   voss_admin from 10.77.0.1\n2026-04-02 AUTH FAIL unknown from 185.220.101.47\n2026-04-10 AUTH OK   voss_admin from 10.77.0.1',
       },
+      kerberoastHashes: [
+        { user: 'svc_helios',   spn: 'HTTP/helios-ctrl-primary.blacksite.int', hash: '$krb5tgs$23$*svc_helios$BLACKSITE.INT$HTTP/helios-ctrl-primary*$A1B2C3...TRUNCATED' },
+        { user: 'svc_pipeline', spn: 'MSSQLSvc/helios-db.blacksite.int:1433',  hash: '$krb5tgs$23$*svc_pipeline$BLACKSITE.INT$MSSQLSvc/helios-db*$D4E5F6...TRUNCATED' },
+      ],
+      asrepHashes: [
+        { user: 'relay_nopreauth', hash: '$krb5asrep$23$relay_nopreauth@BLACKSITE.INT:7G8H9I...TRUNCATED' },
+      ],
+      adGraph: {
+        domain: 'BLACKSITE.INT',
+        users:  ['voss_admin', 'svc_helios', 'svc_pipeline', 'relay_nopreauth'],
+        groups: { 'Domain Admins': ['voss_admin'], 'Helios Operators': ['svc_helios', 'svc_pipeline'] },
+        paths:  ['relay_nopreauth → Helios Operators (via nested group) → svc_helios → Domain Admins'],
+      },
+      pivotRoutes: ['10.50.0.1', '172.20.1.100', '10.0.3.14'],
+      osintDomain: 'voss-relay-alpha.blacksite.int',
     },
     reward:  { crypto: 500 },
     unlocks: ['bruteforce_v2', 'packet_sniffer'],
